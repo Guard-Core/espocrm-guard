@@ -53,6 +53,14 @@ class GuardAgentFactoryTest extends TestCase
         $this->assertSame(['flushBuffer', 'stop'], $agent->calls);
     }
 
+    public function testFlushAndStopFailsLoudlyOnAnAgentWithoutTheLifecycleMethods(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('has no flushBuffer() or stop() method');
+
+        (new GuardAgentFactory())->flushAndStop(new \stdClass());
+    }
+
     #[Depends('testMissingPackageFailsWithInstallInstructions')]
     public function testBuilderEnablesTheAgentWhenAgentSettingsAreGiven(): void
     {

@@ -40,12 +40,11 @@ class GuardAgentFactory
     public function flushAndStop(object $agent): void
     {
         // The agent class is resolved by name, so its methods are not known statically.
-        if (method_exists($agent, 'flushBuffer')) {
-            $agent->flushBuffer();
+        if (!method_exists($agent, 'flushBuffer') || !method_exists($agent, 'stop')) {
+            throw new RuntimeException('Guard agent ' . $agent::class . ' has no flushBuffer() or stop() method.');
         }
 
-        if (method_exists($agent, 'stop')) {
-            $agent->stop();
-        }
+        $agent->flushBuffer();
+        $agent->stop();
     }
 }
