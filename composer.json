@@ -10,9 +10,20 @@
         }
     },
     "require-dev": {
-        "phpunit/phpunit": "^12.5",
+        "phpunit/phpunit": "^11.5 || ^12.5",
         "phpstan/phpstan": "^2.1"
     },
     "license": "MIT",
-    "description": "Guard Core application-layer security for the EspoCRM API."
+    "authors": [
+        {
+            "name": "Renzo Franceschini",
+            "email": "rennf93@guard-core.com",
+            "homepage": "https://github.com/rennf93",
+            "role": "Maintainer"
+        }
+    ],
+    "description": "Guard Core application-layer security for the EspoCRM API.",
+    "config": {
+        "sort-packages": true
+    }
 }

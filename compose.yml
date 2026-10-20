@@ -1,0 +1,35 @@
+# Test stack for `make test`: the suite runs in a PHP container next to a private Redis.
+# PHP_VERSION and ESPOCRM_REF pick the matrix cell, for example:
+#   PHP_VERSION=8.2 ESPOCRM_REF=9.0.0 docker compose run --rm test
+services:
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  test:
+    build:
+      context: .
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.3}
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      ESPOCRM_REF: ${ESPOCRM_REF:-stable}
+    volumes:
+      - .:/app
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        .github/scripts/prepare-site.sh "$$ESPOCRM_REF"
+        composer update --no-interaction --no-progress --quiet
+        vendor/bin/phpstan --memory-limit=1024M --no-progress
+        php .github/coverage-runner.php

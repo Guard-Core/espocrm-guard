@@ -2,7 +2,7 @@
     "module": "GuardCore",
     "name": "Guard Core",
     "description": "Application-layer security for the EspoCRM API: attack screening, behavior bans, per-route policies and a passive mode.",
-    "author": "Renzo Franceschini",
+    "author": "Renzo Franceschini <rennf93@guard-core.com>",
     "bundled": false,
     "acceptableVersions": [
         ">=9.0.0"

@@ -8,4 +8,10 @@
 /src/files/custom/Espo/Modules/*/vendor/
 /vendor
 /.phpunit.result.cache
+/.phpunit.cache/
 /composer.phar
+# The root dev tooling resolves per PHP version (PHPUnit 11 on 8.2, 12 on 8.3+), so its lock is not tracked.
+/composer.lock
+/coverage.php
+.DS_Store
+/examples/*/guard-core.zip

@@ -1,0 +1,7 @@
+# One paragraph is one line, so line length is not checked. Markup the docs sites and READMEs use on purpose is allowed.
+default: true
+MD013: false
+MD033: false
+MD041: false
+MD024:
+  siblings_only: true
