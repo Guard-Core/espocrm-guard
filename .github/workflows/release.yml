@@ -1,0 +1,187 @@
+name: Release
+
+# Releases are immutable (the organization enforces it), so the zip has to be attached before a release is
+# published. A pushed v* tag therefore does three things: it checks the tag, waits for green CI on the tagged commit,
+# builds the extension zip and its checksum, and creates a DRAFT release with both files attached and the CHANGELOG
+# section as its body. The maintainer reads the draft and publishes it.
+#
+# Re-run: Actions > Release > Run workflow with the tag, for example v1.0.0. It checks out that tag. A draft that
+# already exists for the tag stops the run, delete the draft first.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to build, for example v1.0.0'
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  REQUIRED_WORKFLOWS: >-
+    .github/workflows/ci.yml
+    .github/workflows/static-analysis.yml
+    .github/workflows/live-smoke.yml
+
+jobs:
+  verify:
+    name: Tagged commit passed CI
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Resolve the tag
+        id: tag
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            tag="$INPUT_TAG"
+          else
+            tag="$REF_NAME"
+          fi
+          if ! printf '%s' "$tag" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::tag '$tag' is not of the form v1.2.3"
+            exit 1
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout the tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ steps.tag.outputs.tag }}
+          persist-credentials: false
+
+      - name: Require the manifests to carry the tag version
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          version="${TAG#v}"
+          package_version="$(jq -r .version package.json)"
+          if [ "$package_version" != "$version" ]; then
+            echo "::error::package.json version is $package_version, the tag is $TAG"
+            exit 1
+          fi
+          lock_version="$(jq -r .version package-lock.json)"
+          if [ "$lock_version" != "$version" ]; then
+            echo "::error::package-lock.json version is $lock_version, the tag is $TAG"
+            exit 1
+          fi
+          extension_version="$(jq -r '.version // empty' extension.json)"
+          if [ -n "$extension_version" ] && [ "$extension_version" != "$version" ]; then
+            echo "::error::extension.json version is $extension_version, the tag is $TAG"
+            exit 1
+          fi
+          if ! grep -q "^v${version} (" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no section for $TAG"
+            exit 1
+          fi
+
+      # The newest push run of each required workflow on the tagged commit must have succeeded. A tag pushed right
+      # after a merge waits for them (up to an hour) instead of failing.
+      - name: Require green CI on the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          sha=$(git rev-parse HEAD)
+          for _ in $(seq 1 60); do
+            runs=$(gh api "repos/$REPO/actions/runs?head_sha=$sha&event=push&per_page=100" \
+              --jq '[.workflow_runs | group_by(.path)[] | max_by(.run_number) | {path, status, conclusion}]')
+            waiting=0
+            for wf in $REQUIRED_WORKFLOWS; do
+              run=$(jq -c --arg p "$wf" '.[] | select(.path == $p)' <<< "$runs")
+              if [ -z "$run" ]; then
+                echo "$wf: no push run on $sha yet"; waiting=1; continue
+              fi
+              status=$(jq -r .status <<< "$run"); conclusion=$(jq -r .conclusion <<< "$run")
+              if [ "$status" != "completed" ]; then
+                echo "$wf: $status"; waiting=1
+              elif [ "$conclusion" != "success" ]; then
+                echo "::error::$wf concluded $conclusion on $sha; fix the default branch and release a new tag"
+                exit 1
+              else
+                echo "ok: $wf success on $sha"
+              fi
+            done
+            [ "$waiting" = "0" ] && exit 0
+            sleep 60
+          done
+          echo "::error::required workflows did not finish on $sha within an hour"
+          exit 1
+
+  draft-release:
+    name: Build the zip and draft the release
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout the tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ needs.verify.outputs.tag }}
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Build the zip
+        run: |
+          npm ci
+          npm run extension
+
+      - name: Check the zip and write its checksum
+        env:
+          TAG: ${{ needs.verify.outputs.tag }}
+        run: |
+          zip="build/guard-core-${TAG#v}.zip"
+          test -f "$zip"
+          .github/scripts/check-extension-zip.sh "$zip"
+          (cd build && sha256sum "guard-core-${TAG#v}.zip" > "guard-core-${TAG#v}.zip.sha256")
+          cat "$zip.sha256"
+
+      # The release body is the CHANGELOG section of the version, from its heading to the closing ___ rule.
+      - name: Extract the CHANGELOG section
+        env:
+          TAG: ${{ needs.verify.outputs.tag }}
+        run: |
+          awk -v tag="$TAG" '
+            index($0, tag " (") == 1 { found = 1 }
+            found && $0 == "___" { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          test -s release-notes.md
+          cat release-notes.md
+
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.verify.outputs.tag }}
+        run: |
+          gh release create "$TAG" \
+            --draft \
+            --verify-tag \
+            --title "$TAG" \
+            --notes-file release-notes.md \
+            "build/guard-core-${TAG#v}.zip" \
+            "build/guard-core-${TAG#v}.zip.sha256"

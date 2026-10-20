@@ -1,0 +1,116 @@
+name: Docs Update
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '.mike.yml'
+      - 'README.md'
+      - 'CODE_OF_CONDUCT.md'
+      - 'CONTRIBUTING.md'
+      - 'LICENSE'
+      - 'SECURITY.md'
+      - 'CHANGELOG.md'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - '**/SKILL.md'
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: docs-deploy
+  cancel-in-progress: false
+
+jobs:
+  docs-update:
+    name: docs-update
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: python -m pip install --quiet mkdocs-material mike
+
+      - name: Build documentation (strict)
+        run: mkdocs build --strict
+
+      - name: Configure Git user
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+      # .mike.yml names the latest version. DOCS_VERSION stores the version that was last deployed: the first run
+      # has no such secret yet and creates it.
+      - name: Get and update version
+        env:
+          STORED_VERSION: ${{ secrets.DOCS_VERSION }}
+        run: |
+          CURRENT_VERSION=$(python -c "import yaml; print(yaml.safe_load(open('.mike.yml'))['aliases']['latest'])")
+
+          if [[ ! $CURRENT_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid version format in .mike.yml: $CURRENT_VERSION"
+            exit 1
+          fi
+
+          echo "VERSION=$CURRENT_VERSION" >> "$GITHUB_ENV"
+
+          if [[ "$CURRENT_VERSION" != "$STORED_VERSION" ]]; then
+            echo "::notice::Updating DOCS_VERSION from '${STORED_VERSION:-unset}' to $CURRENT_VERSION"
+            echo "UPDATE_SECRET=true" >> "$GITHUB_ENV"
+          else
+            echo "::notice::Versions match ($CURRENT_VERSION), no update needed"
+            echo "UPDATE_SECRET=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Update Docs Version Secret
+        if: ${{ env.UPDATE_SECRET == 'true' }}
+        uses: rennf93/github-actions-secrets-mgmt@6dc05c707be6f28e69a4570fa705687881933b8b # v1.5
+        with:
+          OWNER: ${{ github.repository_owner }}
+          REPOSITORY: ${{ github.event.repository.name }}
+          ACCESS_TOKEN: ${{ secrets.PAT_TOKEN }}
+          SECRET_NAME: DOCS_VERSION
+          SECRET_VALUE: ${{ env.VERSION }}
+
+      - name: Deploy documentation
+        run: |
+          mike deploy --push "$VERSION"
+          mike alias --update-aliases --push "$VERSION" latest
+          mike set-default --push latest
+
+      - name: Deploy to GitHub Pages
+        run: |
+          mike list
+          git push origin gh-pages --force
+
+      - name: Update Context7 Documentation
+        id: context7
+        # Fails until the repository is registered at context7.com, which must not fail the docs deploy.
+        continue-on-error: true
+        uses: rennf93/upsert-context7@c29ca04a37ecbab62635c0e94c3d8908049b9ed5 # 1.1
+        with:
+          operation: refresh
+
+      - name: Show result
+        env:
+          SUCCESS: ${{ steps.context7.outputs.success }}
+          STATUS: ${{ steps.context7.outputs.status-code }}
+          MESSAGE: ${{ steps.context7.outputs.message }}
+        run: |
+          echo "Success: $SUCCESS"
+          echo "Status: $STATUS"
+          echo "Message: $MESSAGE"
