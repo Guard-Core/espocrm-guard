@@ -2,6 +2,7 @@
 # Assertions for examples/simple_app: the guard is on with the default policy (passive mode).
 # Usage: .github/scripts/smoke-simple.sh [project]   (the stack must be up)
 set -euo pipefail
+# shellcheck source=smoke-lib.sh source-path=SCRIPTDIR
 . "$(dirname "$0")/smoke-lib.sh"
 
 project="${1:-espocrm-guard-simple}"

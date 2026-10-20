@@ -3,6 +3,7 @@
 # Usage: .github/scripts/smoke-advanced.sh [project]   (the stack must be up)
 # The 401 ban runs last because it bans the client address of this script.
 set -euo pipefail
+# shellcheck source=smoke-lib.sh source-path=SCRIPTDIR
 . "$(dirname "$0")/smoke-lib.sh"
 
 project="${1:-espocrm-guard-advanced}"
