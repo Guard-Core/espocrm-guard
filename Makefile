@@ -34,8 +34,10 @@ prepare-test:
 	@.github/scripts/prepare-site.sh $(ESPOCRM_REF)
 
 test:
-	PHP_VERSION=$(PHP_VERSION) ESPOCRM_REF=$(ESPOCRM_REF) docker compose run --rm --build test
-	docker compose down -v --remove-orphans
+	@PHP_VERSION=$(PHP_VERSION) ESPOCRM_REF=$(ESPOCRM_REF) docker compose run --rm --build test; \
+	status=$$?; \
+	docker compose down -v --remove-orphans; \
+	exit $$status
 
 local-test:
 	@test -d site || { echo "site/ is missing: run make prepare-test first"; exit 1; }
