@@ -1,0 +1,83 @@
+# EspoCRM (official image) behind nginx, with MariaDB and Redis, the Guard Core extension installed, passive mode
+# off and custom route policies. Build the extension zip first: `make example-zip`. Then:
+#   docker compose -p espocrm-guard-advanced up --build -d --wait
+# nginx answers on http://localhost:8081, user admin, password example-admin-password.
+name: espocrm-guard-advanced
+
+services:
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_ROOT_PASSWORD: example-root-password
+      MARIADB_DATABASE: espocrm
+      MARIADB_USER: espocrm
+      MARIADB_PASSWORD: example-db-password
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+    networks: [backend]
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    networks: [backend]
+
+  espocrm:
+    build: .
+    image: espocrm-guard-advanced-app:local
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ESPOCRM_DATABASE_PLATFORM: Mysql
+      ESPOCRM_DATABASE_HOST: db
+      ESPOCRM_DATABASE_NAME: espocrm
+      ESPOCRM_DATABASE_USER: espocrm
+      ESPOCRM_DATABASE_PASSWORD: example-db-password
+      ESPOCRM_ADMIN_USERNAME: admin
+      ESPOCRM_ADMIN_PASSWORD: example-admin-password
+      ESPOCRM_SITE_URL: http://localhost:8081
+    volumes:
+      - custom:/var/www/html/custom
+      - data:/var/www/html/data
+      - client-custom:/var/www/html/client/custom
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/guard-ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 90
+      start_period: 30s
+    networks: [backend]
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      espocrm:
+        condition: service_healthy
+    ports:
+      - "8081:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks: [backend]
+
+networks:
+  backend:
+    ipam:
+      config:
+        - subnet: 172.29.60.0/24
+
+volumes:
+  db:
+  custom:
+  data:
+  client-custom:
