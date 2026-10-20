@@ -8,7 +8,7 @@ PHP_VERSION ?= 8.3
 ESPOCRM_REF ?= stable
 MODULE = src/files/custom/Espo/Modules/GuardCore
 
-.PHONY: install test local-test lint prepare-test extension bump-version clean help
+.PHONY: install test local-test lint prepare-test extension example-zip bump-version clean help
 
 help:
 	@echo "install        composer and npm dependencies"
@@ -17,6 +17,7 @@ help:
 	@echo "local-test     the same on the local PHP, Redis on 127.0.0.1:6420 (REDIS_HOST, REDIS_PORT)"
 	@echo "lint           php -l sweep, composer validate --strict, PHPStan level 8"
 	@echo "extension      build build/guard-core-<version>.zip"
+	@echo "example-zip    build the extension and copy it into examples/*/ for the example stacks"
 	@echo "bump-version   VERSION=x.y.z, updates package.json, package-lock.json and the CHANGELOG scaffold"
 	@echo "clean          remove vendor, site, build and caches"
 
@@ -66,6 +67,10 @@ lint:
 extension:
 	npm run extension
 
+example-zip: extension
+	cp build/guard-core-*.zip examples/simple_app/guard-core.zip
+	cp build/guard-core-*.zip examples/advanced_app/guard-core.zip
+
 bump-version:
 	@if [ -z "$(VERSION)" ]; then \
 		echo "Usage: make bump-version VERSION=x.y.z"; \
@@ -74,6 +79,6 @@ bump-version:
 	python3 .github/scripts/bump_version.py $(VERSION)
 
 clean:
-	@rm -rf vendor site build node_modules coverage.php .phpunit.cache 2>/dev/null; \
+	@rm -rf vendor site docs_site build node_modules coverage.php .phpunit.cache 2>/dev/null; \
 	find . -name '*.cache' -not -path './.git/*' -delete 2>/dev/null; \
 	echo "cleaned vendor/, site/, build/, node_modules/ and cache files"
