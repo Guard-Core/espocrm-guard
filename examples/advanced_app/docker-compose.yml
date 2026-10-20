@@ -68,7 +68,10 @@ services:
       - "8081:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    networks: [backend]
+    networks:
+      backend:
+        # guard-config.php trusts this address only.
+        ipv4_address: 172.29.60.10
 
 networks:
   backend:

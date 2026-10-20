@@ -1,8 +1,9 @@
 <?php
 
 // Redis holds the rate limit, behavior and ban state so it survives across requests and workers. nginx is the
-// reverse proxy in front of EspoCRM, so only its network is trusted to say who the client is (X-Forwarded-For).
-// Passive mode is off: attacks are blocked.
+// reverse proxy in front of EspoCRM, so only its fixed address is trusted to say who the client is (X-Forwarded-For).
+// Not the whole network: the Docker gateway that host clients come from is in it, and the engine never bans a trusted
+// proxy address. Passive mode is off: attacks are blocked.
 return [
     'guardEnabled' => true,
     'guard' => [
@@ -10,7 +11,7 @@ return [
         'enableRedis' => true,
         'redisUrl' => 'redis://redis:6379',
         'redisPrefix' => 'espocrm_guard_example:',
-        'trustedProxies' => ['172.29.60.0/24'],
+        'trustedProxies' => ['172.29.60.10'],
         'routes' => [
             // The default is 10 per minute. This example allows 3 so the limit is easy to see.
             'POST /api/v1/LeadCapture/' => ['rateLimit' => 3, 'rateLimitWindow' => 60],

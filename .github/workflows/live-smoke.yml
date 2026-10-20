@@ -57,7 +57,10 @@ jobs:
 
       - name: Dump container logs on failure
         if: failure()
-        run: docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/simple_app/docker-compose.yml logs --no-color
+        run: |
+          docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/simple_app/docker-compose.yml logs --no-color
+          # EspoCRM writes its log, the Guard lines included, to files in data/logs.
+          docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/simple_app/docker-compose.yml exec -T espocrm sh -c 'cat data/logs/*.log'
 
       - name: Bring the smoke stack down
         if: always()
@@ -104,7 +107,10 @@ jobs:
 
       - name: Dump container logs on failure
         if: failure()
-        run: docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/advanced_app/docker-compose.yml logs --no-color
+        run: |
+          docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/advanced_app/docker-compose.yml logs --no-color
+          # EspoCRM writes its log, the Guard lines included, to files in data/logs.
+          docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/advanced_app/docker-compose.yml exec -T espocrm sh -c 'cat data/logs/*.log'
 
       - name: Bring the smoke stack down
         if: always()

@@ -3,7 +3,7 @@
 A real EspoCRM (the official `espocrm/espocrm` image) behind nginx, with MariaDB and Redis, and the Guard Core extension installed from the zip this repository builds. Passive mode is off and the route policies are custom (`guard-config.php`):
 
 - Redis holds the rate limit, behavior and ban state, so it holds across requests.
-- nginx is the reverse proxy and `trustedProxies` lists its network (`172.29.60.0/24`, fixed in `docker-compose.yml`), so the client is resolved from `X-Forwarded-For`. nginx sets that header from `$remote_addr` instead of appending to what the client sent.
+- nginx is the reverse proxy and `trustedProxies` lists its address (`172.29.60.10`, fixed in `docker-compose.yml`), so the client is resolved from `X-Forwarded-For`. nginx sets that header from `$remote_addr` instead of appending to what the client sent. Trust the proxy's own address, not its network: the Docker gateway that host clients come from is in that network, and the engine never bans a trusted proxy address.
 - `POST /api/v1/LeadCapture/` allows 3 requests per minute.
 - `GET /api/v1/App/user` bans a client after 3 responses with status 401 in 5 minutes.
 
