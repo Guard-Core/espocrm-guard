@@ -1,0 +1,54 @@
+name: Bug report
+description: Guard Core for EspoCRM does not behave as documented
+title: "[BUG] "
+labels: [bug]
+body:
+  - type: input
+    id: value
+    attributes:
+      label: Value this delivers
+      description: One sentence a user could witness once this is fixed.
+      placeholder: "A POST to the lead capture endpoint is rate limited after the configured number of requests."
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got. Error messages, tracebacks and logs go here.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Set the 'guard' config to '...'
+        2. Send a request to '...'
+        3. See error
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Extension version, EspoCRM version, PHP version, Redis version if used, OS.
+      placeholder: "Guard Core 1.0.0, EspoCRM 10.0.10, PHP 8.4.4, Redis 7.4, Ubuntu 24.04"
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Configuration
+      description: The `guard` array from data/config.php with secrets (Redis URL, agent API key) masked.
+      render: php
+      placeholder: |
+        'guardEnabled' => true,
+        'guard' => [
+            'passiveMode' => false,
+        ],
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Production or development, consistent or intermittent, workarounds tried.
