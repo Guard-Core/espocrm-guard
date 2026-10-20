@@ -1,0 +1,18 @@
+{
+    "name": "rennf93/espocrm-guard-core",
+    "require": {
+        "php": ">=8.2"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Espo\\Modules\\GuardCore\\": "src/files/custom/Espo/Modules/GuardCore",
+            "tests\\unit\\Espo\\Modules\\GuardCore\\": "tests/unit/Espo/Modules/GuardCore"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^12.5",
+        "phpstan/phpstan": "^2.1"
+    },
+    "license": "MIT",
+    "description": "Guard Core application-layer security for the EspoCRM API."
+}

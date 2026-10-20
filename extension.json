@@ -1,0 +1,14 @@
+{
+    "module": "GuardCore",
+    "name": "Guard Core",
+    "description": "Application-layer security for the EspoCRM API: attack screening, behavior bans, per-route policies and a passive mode.",
+    "author": "Renzo Franceschini",
+    "bundled": false,
+    "acceptableVersions": [
+        ">=9.0.0"
+    ],
+    "php": [
+        ">=8.2"
+    ],
+    "scripts": []
+}

@@ -1,0 +1,13 @@
+parameters:
+    level: 8
+    inferPrivatePropertyTypeFromConstructor: true
+    treatPhpDocTypesAsCertain: false
+    paths:
+        - src/files/custom
+    excludePaths:
+        - src/files/custom/Espo/Modules/*/vendor
+    reportUnmatchedIgnoredErrors: false
+    scanDirectories:
+        - site/application
+        - site/vendor
+        - site/custom/Espo/Modules/GuardCore/vendor

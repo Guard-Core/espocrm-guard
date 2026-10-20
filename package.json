@@ -1,0 +1,29 @@
+{
+  "name": "espocrm-ext-guard-core",
+  "version": "1.0.0",
+  "description": "Guard Core application-layer security for the EspoCRM API.",
+  "scripts": {
+    "sa": "vendor/bin/phpstan",
+    "unit-tests": "vendor/bin/phpunit",
+    "integration-tests": "node build --copy && node build --composer-install && cd site && php vendor/bin/phpunit tests/integration/Espo/Modules/GuardCore",
+    "copy": "node build --copy",
+    "composer-install": "node build --composer-install",
+    "sync": "node build --copy && node build --composer-install",
+    "extension": "node build --extension",
+    "clear-cache": "php site/clear_cache.php",
+    "rebuild": "node build --rebuild",
+    "all": "node build --all",
+    "prepare-test": "node build --prepare-test"
+  },
+  "type": "module",
+  "author": "Renzo Franceschini",
+  "dependencies": {
+    "espo-extension-tools": "github:espocrm/extension-tools#0.4.5",
+    "fs-extra": "^9.0.0"
+  },
+  "engines": {
+    "npm": ">=8",
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
