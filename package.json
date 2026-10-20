@@ -18,8 +18,8 @@
   "type": "module",
   "author": "Renzo Franceschini <rennf93@guard-core.com>",
   "dependencies": {
-    "espo-extension-tools": "github:espocrm/extension-tools#0.4.5",
-    "fs-extra": "^9.0.0"
+    "espo-extension-tools": "github:espocrm/extension-tools#0.4.6",
+    "fs-extra": "^11.4.1"
   },
   "engines": {
     "npm": ">=8",
