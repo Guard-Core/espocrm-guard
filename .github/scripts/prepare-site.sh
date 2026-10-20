@@ -10,6 +10,17 @@ ref="${1:-stable}"
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 module="custom/Espo/Modules/GuardCore"
 
+# Composer downloads dist archives from the GitHub API, which now and then answers 5xx.
+retry() {
+  local attempt
+  for attempt in 1 2 3; do
+    "$@" && return 0
+    echo "attempt $attempt failed: $*" >&2
+    sleep $((attempt * 5))
+  done
+  return 1
+}
+
 cd "$root"
 rm -rf site
 mkdir site
@@ -21,10 +32,10 @@ git -C site fetch --quiet --depth 1 origin "$ref"
 git -C site checkout --quiet FETCH_HEAD
 
 # Only the autoloader is used, so the platform extensions EspoCRM needs at runtime are not required here.
-composer install --no-interaction --no-progress --quiet --ignore-platform-reqs --working-dir=site
+retry composer install --no-interaction --no-progress --quiet --ignore-platform-reqs --working-dir=site
 
 mkdir -p "site/$module"
 cp "src/files/$module/composer.json" "src/files/$module/composer.lock" "site/$module/"
-composer install --no-interaction --no-progress --quiet --working-dir="site/$module"
+retry composer install --no-interaction --no-progress --quiet --working-dir="site/$module"
 
 echo "site ready: espocrm/espocrm@$ref"
