@@ -25,5 +25,8 @@
     "npm": ">=8",
     "node": ">=18"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "overrides": {
+    "adm-zip": "^0.6.1"
+  }
 }
