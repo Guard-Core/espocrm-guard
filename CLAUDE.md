@@ -60,7 +60,7 @@ src/files/custom/Espo/Modules/GuardCore/Api/    the module classes
 src/files/custom/Espo/Modules/GuardCore/Resources/  module.json, autoload.json, metadata/app/{api,config}.json
 src/files/custom/Espo/Modules/GuardCore/composer.json, composer.lock  module libraries (the lock is what ships)
 src/scripts/AfterUninstall.php                  removes guardEnabled and guard on uninstall
-src/.agents/skills/espocrm-guard/SKILL.md       agent skill (not part of the zip)
+.agents/skills/espocrm-guard/SKILL.md           agent skill (outside src/, so it is not in the zip)
 tests/unit/Espo/Modules/GuardCore/              PHPUnit suite (MiddlewareTest, GuardAgentFactoryTest, AfterUninstallTest)
 php_scripts/, build.js, config-default.json     espo-extension-tools helpers and build
 examples/simple_app, examples/advanced_app      Docker Compose stacks with a real EspoCRM and the built zip

@@ -37,6 +37,7 @@ forbid "^${vendor}/psr/" "psr/* packages (EspoCRM provides them)"
 forbid "slim" "Slim files (EspoCRM provides it)"
 forbid "^${vendor}/rennf93/[^/]+/(tests|docs|examples|conformance|\.github)/" "tests, docs or examples of a bundled library"
 forbid "(^|/)(tests?|docs)/" "a tests or docs directory"
+forbid "^\.agents/" "the agent skill (it lives outside src/ so it stays out of the zip)"
 
 size="$(wc -c < "$zip" | tr -d ' ')"
 if [ "$size" -gt "$max_bytes" ]; then
