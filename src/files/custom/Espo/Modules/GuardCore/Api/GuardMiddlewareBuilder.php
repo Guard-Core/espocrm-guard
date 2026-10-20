@@ -21,7 +21,7 @@ use Slim\Psr7\Factory\StreamFactory;
  */
 class GuardMiddlewareBuilder
 {
-    private const string DEFAULT_CLIENT_ADDRESS_PARAM = 'REMOTE_ADDR';
+    private const DEFAULT_CLIENT_ADDRESS_PARAM = 'REMOTE_ADDR';
 
     public function __construct(
         private Config $config,

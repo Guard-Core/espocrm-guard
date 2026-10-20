@@ -15,10 +15,10 @@ use RenzoFranceschini\GuardCore\Config\SecurityConfig;
 class SecurityConfigBuilder
 {
     /** Settings that are not engine options, consumed by other builders. */
-    private const array NON_ENGINE_KEYS = ['routes', 'agent', 'ipinfo'];
+    private const NON_ENGINE_KEYS = ['routes', 'agent', 'ipinfo'];
 
     /** Options that take a closure or an object, which a config file cannot express. */
-    private const array NOT_CONFIGURABLE = [
+    private const NOT_CONFIGURABLE = [
         'onBlock',
         'customRequestCheck',
         'authVerifier',

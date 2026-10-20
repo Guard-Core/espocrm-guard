@@ -10,7 +10,7 @@ use RuntimeException;
  */
 class GuardAgentFactory
 {
-    private const string AGENT_CLASS = 'RenzoFranceschini\\GuardAgent\\GuardAgent';
+    private const AGENT_CLASS = 'RenzoFranceschini\\GuardAgent\\GuardAgent';
 
     /**
      * @param array<string, mixed> $settings

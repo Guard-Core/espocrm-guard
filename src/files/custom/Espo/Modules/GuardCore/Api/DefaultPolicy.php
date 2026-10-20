@@ -11,7 +11,7 @@ namespace Espo\Modules\GuardCore\Api;
  */
 class DefaultPolicy
 {
-    private const string API_PREFIX = '/api/v1/';
+    private const API_PREFIX = '/api/v1/';
 
     /**
      * @param array<string, mixed> $operatorSettings

@@ -15,10 +15,10 @@ use RenzoFranceschini\GuardCore\Routing\RouteConfig;
  */
 class RouteConfigBuilder
 {
-    private const string HONEYPOT_OPTION = 'honeypotFields';
+    private const HONEYPOT_OPTION = 'honeypotFields';
 
     /** Options that take a closure, which a config file cannot express. */
-    private const array NOT_CONFIGURABLE = ['authVerifier', 'apiKeyVerifier', 'customValidators'];
+    private const NOT_CONFIGURABLE = ['authVerifier', 'apiKeyVerifier', 'customValidators'];
 
     /**
      * @param array<string, mixed> $routes

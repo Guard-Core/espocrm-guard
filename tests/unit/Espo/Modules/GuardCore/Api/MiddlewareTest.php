@@ -24,9 +24,9 @@ use Slim\Psr7\Factory\StreamFactory;
 
 class MiddlewareTest extends TestCase
 {
-    private const string CLIENT_IP = '203.0.113.5';
+    private const CLIENT_IP = '203.0.113.5';
 
-    private const int REDIS_PORT = 6420;
+    private const REDIS_PORT = 6420;
 
     private TestHandler $logHandler;
 
@@ -493,7 +493,7 @@ class MiddlewareTest extends TestCase
      */
     private function createConfig(array $values): Config
     {
-        $config = $this->createMock(Config::class);
+        $config = $this->createStub(Config::class);
         $config->method('get')->willReturnCallback(fn (string $name, $default = null) => $values[$name] ?? $default);
 
         return $config;
