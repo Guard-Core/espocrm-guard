@@ -5,7 +5,7 @@ set -euo pipefail
 
 if [[ "${1-}" == apache2* ]]; then
   (
-    until grep -qs "'isInstalled' => true" /var/www/html/data/config.php; do
+    until grep -qs "'isInstalled' => true" /var/www/html/data/config-internal.php; do
       sleep 3
     done
 
