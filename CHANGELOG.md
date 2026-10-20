@@ -17,11 +17,7 @@ The first release: opt-in application-layer security for the EspoCRM API as an e
 - **Optional Redis, trusted proxies and the telemetry agent** (`rennf93/guard-agent-php`, loaded only when installed).
 - **Examples**: `examples/simple_app` (default policy, passive mode) and `examples/advanced_app` (Redis, nginx with `trustedProxies`, passive mode off, custom route policies), each a Docker Compose stack with a real EspoCRM and MariaDB that installs the built zip through EspoCRM's extension install.
 - **Documentation** at guard-core.github.io/espocrm-guard: installation, configuration, usage and the default policy, the telemetry agent, what it covers and does not.
-
-### Changed
-
 - **The uninstall removes `guardEnabled` and `guard` from the config files**, because once the extension is gone nothing would hide the Redis URL and the agent API key from the Settings API.
-- **The release is an immutable GitHub release with the zip attached.** Pushing a `v*` tag builds the zip and its `.sha256` file and creates a draft release with the CHANGELOG section as its body.
 
 ### Test
 
@@ -30,5 +26,6 @@ The first release: opt-in application-layer security for the EspoCRM API as an e
 ### Chore
 
 - Baseline tooling in line with the rest of the Guard Core repositories: workflows pinned by commit SHA, CodeQL, PHPStan level 8, Semgrep, upstream drift checks against psr15-guard, guard-core-php and EspoCRM master, pre-commit, a Makefile, versioned documentation, and the community and governance files.
+- **The release is an immutable GitHub release with the zip attached.** Pushing a `v*` tag builds the zip and its `.sha256` file and creates a draft release with the CHANGELOG section as its body.
 
 ___

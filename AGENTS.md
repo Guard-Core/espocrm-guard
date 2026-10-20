@@ -28,7 +28,7 @@ The extension wires; the engine decides.
 - MUST fail loudly on bad config: an unknown `guard` key, an unknown route option, an invalid behavior rule, an unsupported Redis URL or an `agent` map without the agent package throws instead of being ignored.
 - MUST keep `guard` and `guardEnabled` out of every API response: `Resources/metadata/app/config.json` declares both at level `system`, and `src/scripts/AfterUninstall.php` removes both from the config files when the module is uninstalled.
 - MUST NOT bundle `psr/*` or Slim in the zip. `.github/scripts/check-extension-zip.sh` checks the zip contents and size on every CI build and release.
-- MUST NOT add GDPR-relevant data handling: the module logs engine verdicts (check name, reason, client IP, method, path, status) through EspoCRM's logger, and nothing else.
+- MUST NOT log or store anything beyond the engine verdict lines (check name, reason, client IP, method, path, status) it writes through EspoCRM's logger.
 
 ## Quick Start
 
