@@ -79,7 +79,6 @@ jobs:
           coverage: none
           ini-values: memory_limit=1024M
 
-      # PHPUnit 12 needs PHP 8.3, so the unlocked constraint resolves PHPUnit 11 on PHP 8.2.
       - name: Install dependencies and build site
         env:
           ESPOCRM_REF: ${{ matrix.espocrm }}

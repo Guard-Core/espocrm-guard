@@ -23,5 +23,5 @@ With only `guardEnabled` set: passive mode, attack screening on, no body scan on
 - Redis is off by default, so rate limits and bans do not hold across PHP-FPM requests until `enableRedis` and `redisUrl` (`redis://host[:port]` only) are set.
 - The client is `REMOTE_ADDR`. Behind a proxy set `guard.trustedProxies`; `ipAddressServerParam` is not read.
 - `site/` is the EspoCRM checkout PHPStan and PHPUnit use. Never run a docs build into it: `mkdocs.yml` sets `site_dir: docs_site`.
-- PHP 8.2 works only with EspoCRM 9.0.0. PHPUnit resolves per PHP version, so the root `composer.lock` is not tracked.
+- PHP 8.2 works only with EspoCRM 9.0.0. The root `composer.lock` is resolved for PHP 8.2 (`config.platform`), so every PHP runs PHPUnit 11.5.
 - Releases are immutable: a `v*` tag makes `release.yml` draft a release with the zip and its `.sha256`; the maintainer publishes it.

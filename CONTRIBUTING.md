@@ -21,7 +21,7 @@ make test              # the same in Docker with a private Redis
 make extension         # builds build/guard-core-<version>.zip
 ```
 
-One unit test needs Redis on `REDIS_HOST:REDIS_PORT` (default 127.0.0.1:6420) and skips without it. PHPUnit resolves per PHP version (11 on 8.2, 12 on 8.3 and later), so `composer.lock` at the root is not tracked. The module's `composer.lock` is: it decides what the zip ships.
+One unit test needs Redis on `REDIS_HOST:REDIS_PORT` (default 127.0.0.1:6420) and skips without it. Both lock files are tracked: the root `composer.lock` is resolved for PHP 8.2 (`config.platform`), so every supported PHP runs the same PHPUnit 11.5, and the module's `composer.lock` decides what the zip ships.
 
 ## Quality Gates
 

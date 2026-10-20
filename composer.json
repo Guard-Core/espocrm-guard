@@ -10,7 +10,7 @@
         }
     },
     "require-dev": {
-        "phpunit/phpunit": "^11.5 || ^12.5",
+        "phpunit/phpunit": "^11.5",
         "phpstan/phpstan": "^2.1"
     },
     "license": "MIT",
@@ -24,6 +24,9 @@
     ],
     "description": "Guard Core application-layer security for the EspoCRM API.",
     "config": {
+        "platform": {
+            "php": "8.2.0"
+        },
         "sort-packages": true
     }
 }
