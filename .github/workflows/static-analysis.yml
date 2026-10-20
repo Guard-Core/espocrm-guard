@@ -1,0 +1,49 @@
+name: Static Analysis
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: '0 5 * * 1'
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: static-analysis-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  phpstan:
+    name: PHPStan (level 8)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: mbstring
+          coverage: none
+          ini-values: memory_limit=1024M
+
+      - name: Install dependencies and build site
+        run: |
+          composer install --no-interaction --no-progress
+          .github/scripts/prepare-site.sh stable
+
+      # The level is set in phpstan.neon (8, the highest level with zero findings).
+      - name: PHPStan analyse (level 8)
+        run: vendor/bin/phpstan analyse --memory-limit=1024M --no-progress

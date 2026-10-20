@@ -1,0 +1,15 @@
+# One paragraph is one line, so line length is not checked. The baseline files this repository mirrors (the code of
+# conduct, the ecosystem block of the README, the PR template, AGENTS.md) use setext headings, bare URLs, `___`
+# rules and unaligned tables, so those style rules are off.
+default: true
+MD003: false
+MD013: false
+MD022: false
+MD024:
+  siblings_only: true
+MD033: false
+MD034: false
+MD035: false
+MD041: false
+MD056: false
+MD060: false

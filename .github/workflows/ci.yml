@@ -1,0 +1,214 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  pre-commit:
+    name: pre-commit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: mbstring
+          coverage: none
+
+      - name: Install dependencies and build site
+        run: |
+          composer install --no-interaction --no-progress
+          .github/scripts/prepare-site.sh stable
+
+      - name: Run pre-commit
+        run: pipx run --spec pre-commit==4.3.0 pre-commit run --all-files --show-diff-on-failure
+
+  test:
+    name: Test (php ${{ matrix.php }}, EspoCRM ${{ matrix.espocrm }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # EspoCRM 9.0.0 supports PHP 8.2 to 8.4 and stable (10.x) supports PHP 8.3 to 8.5, so each EspoCRM line
+        # runs on every PHP version it supports and together they cover 8.2, 8.3, 8.4 and 8.5.
+        include:
+          - {php: '8.2', espocrm: '9.0.0'}
+          - {php: '8.3', espocrm: '9.0.0'}
+          - {php: '8.4', espocrm: '9.0.0'}
+          - {php: '8.3', espocrm: 'stable'}
+          - {php: '8.4', espocrm: 'stable'}
+          - {php: '8.5', espocrm: 'stable'}
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6420:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring
+          coverage: none
+          ini-values: memory_limit=1024M
+
+      - name: Install dependencies and build site
+        env:
+          ESPOCRM_REF: ${{ matrix.espocrm }}
+        run: |
+          composer install --no-interaction --no-progress
+          .github/scripts/prepare-site.sh "$ESPOCRM_REF"
+
+      - name: php -l sweep
+        run: find src tests php_scripts bootstrap.php -name '*.php' -exec php -l {} \; > /dev/null && echo LINT_OK
+
+      - name: Unit tests
+        env:
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: '6420'
+        run: vendor/bin/phpunit
+
+  composer-audit:
+    name: Composer audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Audit the module libraries (what the zip ships)
+        run: composer audit --locked --working-dir=src/files/custom/Espo/Modules/GuardCore
+
+      - name: Audit the dev tooling
+        run: |
+          composer install --no-interaction --no-progress
+          composer audit
+
+  coverage:
+    name: coverage (100% lines)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6420:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP with pcov
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: mbstring
+          coverage: pcov
+          ini-values: memory_limit=1024M
+
+      - name: Install dependencies and build site
+        run: |
+          composer install --no-interaction --no-progress
+          .github/scripts/prepare-site.sh stable
+
+      - name: Enforce 100% line coverage
+        env:
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: '6420'
+        run: php .github/coverage-runner.php
+
+  build:
+    name: Build extension zip
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Build the zip
+        run: |
+          npm ci
+          npm run extension
+
+      - name: Check the zip contents and size
+        run: .github/scripts/check-extension-zip.sh build/guard-core-*.zip
+
+      - name: Upload the zip
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: guard-core-extension
+          path: build/guard-core-*.zip
+          if-no-files-found: error
+
+  ci:
+    name: ci
+    if: always()
+    needs: [pre-commit, test, composer-audit, coverage, build]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Fail when any CI job failed or was cancelled
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "job results: $RESULTS"
+          case " $RESULTS " in
+            *" failure "*|*" cancelled "*) echo "::error::a CI job failed or was cancelled"; exit 1 ;;
+          esac

@@ -1,0 +1,44 @@
+name: Scheduled Lint
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  scheduled-lint:
+    name: Weekly composer audit + php -l + phpstan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: mbstring
+          coverage: none
+          ini-values: memory_limit=1024M
+
+      - name: Install dependencies and build site
+        run: |
+          composer install --no-interaction --no-progress
+          .github/scripts/prepare-site.sh stable
+
+      - name: php -l sweep
+        run: find src tests php_scripts bootstrap.php -name '*.php' -exec php -l {} \; > /dev/null && echo LINT_OK
+
+      - name: PHPStan (level 8)
+        run: vendor/bin/phpstan analyse --memory-limit=1024M --no-progress
+
+      - name: Composer audit
+        run: |
+          composer audit
+          composer audit --locked --working-dir=src/files/custom/Espo/Modules/GuardCore

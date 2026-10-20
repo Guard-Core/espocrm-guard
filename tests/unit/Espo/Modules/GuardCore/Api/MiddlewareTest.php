@@ -17,7 +17,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use RuntimeException;
 use Slim\Psr7\Factory\ResponseFactory;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use Slim\Psr7\Factory\StreamFactory;
@@ -26,7 +25,7 @@ class MiddlewareTest extends TestCase
 {
     private const CLIENT_IP = '203.0.113.5';
 
-    private const REDIS_PORT = 6420;
+    private const DEFAULT_REDIS_PORT = 6420;
 
     private TestHandler $logHandler;
 
@@ -281,10 +280,10 @@ class MiddlewareTest extends TestCase
 
     public function testBanFromBehaviorRuleIsSharedThroughRedis(): void
     {
-        $connection = @fsockopen('127.0.0.1', self::REDIS_PORT, timeout: 1);
+        $connection = @fsockopen($this->getRedisHost(), $this->getRedisPort(), timeout: 1);
 
         if ($connection === false) {
-            $this->markTestSkipped('No Redis on 127.0.0.1:' . self::REDIS_PORT . '.');
+            $this->markTestSkipped('No Redis on ' . $this->getRedisHost() . ':' . $this->getRedisPort() . '.');
         }
 
         fclose($connection);
@@ -292,7 +291,7 @@ class MiddlewareTest extends TestCase
         $guard = [
             'passiveMode' => false,
             'enableRedis' => true,
-            'redisUrl' => 'redis://127.0.0.1:' . self::REDIS_PORT,
+            'redisUrl' => 'redis://' . $this->getRedisHost() . ':' . $this->getRedisPort(),
             'redisPrefix' => 'espo_guard_test_' . bin2hex(random_bytes(4)) . ':',
             'routes' => ['GET /api/v1/App/user' => ['behaviorRules' => [[
                 'rule_type' => 'return_pattern',
@@ -385,7 +384,7 @@ class MiddlewareTest extends TestCase
 
     public function testPlainRedisUrlIsAccepted(): void
     {
-        $response = $this->createMiddleware(['redisUrl' => 'redis://127.0.0.1:6420'])
+        $response = $this->createMiddleware(['redisUrl' => 'redis://' . $this->getRedisHost() . ':' . $this->getRedisPort()])
             ->process($this->createRequest('GET', '/'), $this->createHandler());
 
         $this->assertSame(200, $response->getStatusCode());
@@ -436,16 +435,89 @@ class MiddlewareTest extends TestCase
             ->process($this->createRequest('GET', '/'), $this->createHandler());
     }
 
-    public function testAgentSettingsWithoutThePackageFailLoudly(): void
+    public function testGuardConfigThatIsNotAMapFailsLoudly(): void
     {
-        if (class_exists('RenzoFranceschini\\GuardAgent\\GuardAgent')) {
-            $this->markTestSkipped('The agent package is installed.');
+        $builder = $this->createMock(GuardMiddlewareBuilder::class);
+        $builder->expects(self::never())->method('build');
+
+        $middleware = new Middleware(
+            $this->createConfig(['guardEnabled' => true, 'guard' => 'nope']),
+            new DefaultPolicy(),
+            $builder
+        );
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Config parameter 'guard' must be a map of settings.");
+
+        $middleware->process($this->createRequest('GET', '/'), $this->createHandler());
+    }
+
+    public function testRoutesThatAreNotAMapFailLoudly(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Guard config 'routes' must be a map of route key to options.");
+
+        (new DefaultPolicy())->merge(['routes' => 'nope']);
+    }
+
+    public function testRouteThatIsNotAMapFailsLoudly(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Guard route '/x/' must be a map of options.");
+
+        $this->createMiddleware(['routes' => ['/x/' => 'nope']])
+            ->process($this->createRequest('GET', '/'), $this->createHandler());
+    }
+
+    public function testInvalidBypassedChecksFailLoudly(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Invalid bypassedChecks for guard route '/x/': nonsense.");
+
+        $this->createMiddleware(['routes' => ['/x/' => ['bypassedChecks' => ['nonsense']]]])
+            ->process($this->createRequest('GET', '/'), $this->createHandler());
+    }
+
+    public function testAgentSettingsThatAreNotAMapFailLoudly(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Guard config 'agent' must be a map of agent settings.");
+
+        $this->createMiddleware(['agent' => 'nope'])
+            ->process($this->createRequest('GET', '/'), $this->createHandler());
+    }
+
+    public function testIpinfoWithoutATokenFailsLoudly(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Guard config 'ipinfo' needs a 'token' string.");
+
+        $this->createMiddleware(['ipinfo' => ['maxAge' => 60]])
+            ->process($this->createRequest('GET', '/'), $this->createHandler());
+    }
+
+    public function testIpinfoBuildsTheCountryResolverFromAFreshDatabaseFile(): void
+    {
+        // A database file younger than maxAge is not downloaded, so the test needs no network.
+        $directory = sys_get_temp_dir() . '/guard-core-ipinfo-' . bin2hex(random_bytes(4));
+        mkdir($directory);
+        file_put_contents($directory . '/country_asn.mmdb', 'not a database');
+        // The engine reports the unreadable database through error_log.
+        $previousErrorLog = ini_set('error_log', '/dev/null');
+
+        try {
+            $response = $this->createMiddleware(['ipinfo' => [
+                'token' => 'test-token',
+                'dbPath' => $directory . '/country_asn.mmdb',
+                'maxAge' => 3600,
+            ]])->process($this->createRequest('GET', '/'), $this->createHandler());
+        } finally {
+            ini_set('error_log', (string) $previousErrorLog);
+            array_map('unlink', glob($directory . '/*') ?: []);
+            rmdir($directory);
         }
 
-        $this->expectException(RuntimeException::class);
-
-        $this->createMiddleware(['agent' => ['apiKey' => 'k']])
-            ->process($this->createRequest('GET', '/'), $this->createHandler());
+        $this->assertSame(200, $response->getStatusCode());
     }
 
     public function testWarnsWhenClientAddressParamIsNotRemoteAddr(): void
@@ -461,6 +533,16 @@ class MiddlewareTest extends TestCase
         $this->createMiddleware([])->process($this->createRequest('GET', '/'), $this->createHandler());
 
         $this->assertFalse($this->logHandler->hasWarningThatContains('guard.trustedProxies'));
+    }
+
+    private function getRedisHost(): string
+    {
+        return getenv('REDIS_HOST') ?: '127.0.0.1';
+    }
+
+    private function getRedisPort(): int
+    {
+        return (int) (getenv('REDIS_PORT') ?: self::DEFAULT_REDIS_PORT);
     }
 
     public function recordHandled(ServerRequestInterface $request): void

@@ -1,0 +1,56 @@
+"area: middleware":
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/files/custom/Espo/Modules/GuardCore/Api/**
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - tests/**
+          - phpunit.xml
+          - .github/coverage-runner.php
+
+examples:
+  - changed-files:
+      - any-glob-to-any-file:
+          - examples/**
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**
+          - mkdocs.yml
+          - .mike.yml
+          - README.md
+          - AGENTS.md
+          - CLAUDE.md
+          - LICENSE
+          - CONTRIBUTING.md
+          - SECURITY.md
+          - GOVERNANCE.md
+          - MAINTAINERS.md
+          - SUPPORT.md
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/**
+          - .pre-commit-config.yaml
+
+build:
+  - changed-files:
+      - any-glob-to-any-file:
+          - Dockerfile
+          - compose.yml
+          - build.js
+          - extension.json
+          - Makefile
+
+dependencies:
+  - changed-files:
+      - any-glob-to-any-file:
+          - composer.json
+          - src/files/custom/Espo/Modules/GuardCore/composer.json
+          - src/files/custom/Espo/Modules/GuardCore/composer.lock
+          - package.json
+          - package-lock.json

@@ -1,0 +1,37 @@
+site_name: espocrm-guard
+site_url: https://guard-core.github.io/espocrm-guard/
+site_description: Guard Core application-layer security for the EspoCRM API
+site_author: Renn F
+# Not site/, which is the EspoCRM checkout the tests and PHPStan run against.
+site_dir: docs_site
+repo_url: https://github.com/Guard-Core/espocrm-guard
+repo_name: Guard-Core/espocrm-guard
+edit_uri: edit/master/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: amber
+  features:
+    - content.code.copy
+    - navigation.sections
+
+extra:
+  version:
+    provider: mike
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - tables
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Configuration: configuration.md
+  - Usage and default policy: usage.md
+  - Telemetry agent: telemetry-agent.md
+  - What it covers and does not: coverage.md

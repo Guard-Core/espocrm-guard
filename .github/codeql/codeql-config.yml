@@ -1,0 +1,4 @@
+name: espocrm-guard CodeQL
+paths-ignore:
+  - tests
+  - examples

@@ -1,0 +1,44 @@
+name: Greetings
+
+on: [pull_request_target, issues]
+
+permissions: {}
+
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    steps:
+    - uses: actions/first-interaction@1c4688942c71f71d4f5502a26ea67c331730fa4d # v3.1.0
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        issue_message: |
+            Thanks for opening your first issue on **espocrm-guard**!
+
+            To help us triage quickly, please make sure your report includes:
+            - A clear reproduction (the `guard` config and the request you sent are ideal)
+            - Output of `php -v` (the extension requires PHP 8.2 or later) and your EspoCRM version
+            - The extension version and the `rennf93/psr15-guard` and `rennf93/guard-core-php` versions in the module's `vendor/`
+            - Whether EspoCRM runs behind a reverse proxy, and the `guard.trustedProxies` you set
+            - Redis configuration if relevant (the engine uses Redis for distributed bans and rate limiting)
+
+            A few pointers:
+            - Scan [README.md](../blob/master/README.md) for the config keys, and the [guard-core-php docs](https://github.com/Guard-Core/guard-core-php) for engine behavior.
+            - **Security vulnerability?** Do **not** open a public issue - please use GitHub's private vulnerability reporting.
+
+            Thanks again - a maintainer will be with you soon.
+        pr_message: |
+            Thanks for opening your first pull request on **espocrm-guard**!
+
+            Quick checklist before review (most of these are enforced by CI, but worth a glance):
+            - [ ] The PR body says `Closes #N` for an open issue (the `issue-link` check enforces it); chores take the `no-issue` label
+            - [ ] `make lint` passes (`php -l`, PHPStan level 8, `composer validate --strict`)
+            - [ ] `make test` passes (PHPUnit with the 100% line coverage gate)
+            - [ ] `composer audit` is clean
+            - [ ] No detection logic or verdict shaping added to the module; it only wires the engine into EspoCRM
+            - [ ] `vendor/`, `site/`, `build/` and generated artifacts are not committed
+            - [ ] If you touched the config keys or the default policy, updated [README.md](../blob/master/README.md) and the docs site
+
+            Welcome aboard - a maintainer will review shortly.

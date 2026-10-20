@@ -1,0 +1,55 @@
+# EspoCRM (official image) + MariaDB with the Guard Core extension installed and the default policy on.
+# Build the extension zip first: `make example-zip`. Then:
+#   docker compose -p espocrm-guard-simple up --build -d --wait
+# EspoCRM answers on http://localhost:8080, user admin, password example-admin-password.
+name: espocrm-guard-simple
+
+services:
+  db:
+    image: mariadb:11.4
+    environment:
+      MARIADB_ROOT_PASSWORD: example-root-password
+      MARIADB_DATABASE: espocrm
+      MARIADB_USER: espocrm
+      MARIADB_PASSWORD: example-db-password
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  espocrm:
+    build: .
+    image: espocrm-guard-simple-app:local
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ESPOCRM_DATABASE_PLATFORM: Mysql
+      ESPOCRM_DATABASE_HOST: db
+      ESPOCRM_DATABASE_NAME: espocrm
+      ESPOCRM_DATABASE_USER: espocrm
+      ESPOCRM_DATABASE_PASSWORD: example-db-password
+      ESPOCRM_ADMIN_USERNAME: admin
+      ESPOCRM_ADMIN_PASSWORD: example-admin-password
+      ESPOCRM_SITE_URL: http://localhost:8080
+    ports:
+      - "8080:80"
+    volumes:
+      - custom:/var/www/html/custom
+      - data:/var/www/html/data
+      - client-custom:/var/www/html/client/custom
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/guard-ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 90
+      start_period: 30s
+
+volumes:
+  db:
+  custom:
+  data:
+  client-custom:

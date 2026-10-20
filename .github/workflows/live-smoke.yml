@@ -1,0 +1,117 @@
+name: Live Smoke
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: live-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live-smoke:
+    name: Dockerized smoke run (simple_app)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+
+    env:
+      LIVE_SMOKE_PROJECT: espocrm-guard-live-smoke
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Build the extension zip into the example
+        run: |
+          npm ci
+          npm run extension
+          cp build/guard-core-*.zip examples/simple_app/guard-core.zip
+
+      - name: Bring the smoke stack up (EspoCRM + MariaDB, extension installed)
+        run: docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/simple_app/docker-compose.yml up --build -d --wait --wait-timeout 600
+
+      - name: Run smoke assertions
+        run: .github/scripts/smoke-simple.sh "$LIVE_SMOKE_PROJECT"
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: |
+          docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/simple_app/docker-compose.yml logs --no-color
+          # EspoCRM writes its log, the Guard lines included, to files in data/logs.
+          docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/simple_app/docker-compose.yml exec -T espocrm sh -c 'cat data/logs/*.log'
+
+      - name: Bring the smoke stack down
+        if: always()
+        run: docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/simple_app/docker-compose.yml down -v --remove-orphans
+
+  live-smoke-advanced:
+    name: Dockerized smoke run (advanced_app)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+
+    env:
+      LIVE_SMOKE_PROJECT: espocrm-guard-live-smoke-advanced
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          coverage: none
+
+      - name: Set up Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Build the extension zip into the example
+        run: |
+          npm ci
+          npm run extension
+          cp build/guard-core-*.zip examples/advanced_app/guard-core.zip
+
+      - name: Bring the smoke stack up (nginx + EspoCRM + MariaDB + Redis, extension installed)
+        run: docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/advanced_app/docker-compose.yml up --build -d --wait --wait-timeout 600
+
+      - name: Run smoke assertions
+        run: .github/scripts/smoke-advanced.sh "$LIVE_SMOKE_PROJECT"
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: |
+          docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/advanced_app/docker-compose.yml logs --no-color
+          # EspoCRM writes its log, the Guard lines included, to files in data/logs.
+          docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/advanced_app/docker-compose.yml exec -T espocrm sh -c 'cat data/logs/*.log'
+
+      - name: Bring the smoke stack down
+        if: always()
+        run: docker compose -p "$LIVE_SMOKE_PROJECT" -f examples/advanced_app/docker-compose.yml down -v --remove-orphans

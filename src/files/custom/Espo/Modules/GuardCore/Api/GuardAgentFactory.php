@@ -29,11 +29,22 @@ class GuardAgentFactory
 
         $agent->start();
 
-        register_shutdown_function(function () use ($agent): void {
-            $agent->flushBuffer();
-            $agent->stop();
-        });
+        register_shutdown_function([$this, 'flushAndStop'], $agent);
 
         return $agent;
+    }
+
+    /**
+     * Runs at the end of the request so the buffered events reach the agent backend.
+     */
+    public function flushAndStop(object $agent): void
+    {
+        // The agent class is resolved by name, so its methods are not known statically.
+        if (!method_exists($agent, 'flushBuffer') || !method_exists($agent, 'stop')) {
+            throw new RuntimeException('Guard agent ' . $agent::class . ' has no flushBuffer() or stop() method.');
+        }
+
+        $agent->flushBuffer();
+        $agent->stop();
     }
 }

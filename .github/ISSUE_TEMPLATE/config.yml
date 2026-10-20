@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Guard Core for EspoCRM Documentation
+    url: https://guard-core.github.io/espocrm-guard/
+    about: Check the documentation for usage information and tutorials
+  - name: Usage Questions
+    url: https://github.com/Guard-Core/espocrm-guard/discussions
+    about: Please ask and answer questions in GitHub Discussions
+  - name: Discord
+    url: https://discord.gg/ZW7ZJbjMkK
+    about: Questions and support in #help, new versions in #releases, development stream in #dev-php
