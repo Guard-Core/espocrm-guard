@@ -1,0 +1,6 @@
+{
+    "psr-4": {
+        "RenzoFranceschini\\GuardCore\\": "custom/Espo/Modules/GuardCore/vendor/rennf93/guard-core-php/src",
+        "RenzoFranceschini\\GuardCorePsr15\\": "custom/Espo/Modules/GuardCore/vendor/rennf93/psr15-guard/src"
+    }
+}

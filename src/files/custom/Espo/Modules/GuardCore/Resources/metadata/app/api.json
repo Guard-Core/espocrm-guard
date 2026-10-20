@@ -1,0 +1,5 @@
+{
+    "globalMiddlewareClassNameList": [
+        "Espo\\Modules\\GuardCore\\Api\\Middleware"
+    ]
+}

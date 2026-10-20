@@ -1,0 +1,18 @@
+{
+    "name": "rennf93/espocrm-guard-core",
+    "description": "Guard Core application-layer security for the EspoCRM API.",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2",
+        "rennf93/psr15-guard": "^1.6.1"
+    },
+    "replace": {
+        "psr/http-message": "*",
+        "psr/http-factory": "*",
+        "psr/http-server-handler": "*",
+        "psr/http-server-middleware": "*"
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
