@@ -1,0 +1,128 @@
+name: Upstream Drift
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  upstream-drift:
+    name: Test against psr15-guard@master and guard-core-php@master
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6420:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - name: Checkout espocrm-guard
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout psr15-guard@master
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Guard-Core/psr15-guard
+          ref: master
+          path: upstream/psr15-guard
+          persist-credentials: false
+
+      - name: Checkout guard-core-php@master
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Guard-Core/guard-core-php
+          ref: master
+          path: upstream/guard-core-php
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: mbstring
+          coverage: none
+          ini-values: memory_limit=1024M
+
+      - name: Install dependencies and build site
+        run: |
+          composer install --no-interaction --no-progress
+          .github/scripts/prepare-site.sh stable
+
+      # The aliases satisfy the floors the module and psr15-guard declare (^1.6.1 and ^4.4.0), so master resolves in
+      # place of the released versions.
+      - name: Swap the module libraries for the master checkouts
+        working-directory: site/custom/Espo/Modules/GuardCore
+        run: |
+          composer config repositories.psr15-guard path "$GITHUB_WORKSPACE/upstream/psr15-guard"
+          composer config repositories.guard-core-php path "$GITHUB_WORKSPACE/upstream/guard-core-php"
+          composer require --no-update --no-interaction "rennf93/psr15-guard:dev-master as 1.99.0" "rennf93/guard-core-php:dev-master as 4.99.0"
+          composer update --no-interaction --no-progress "rennf93/*"
+          composer show rennf93/psr15-guard rennf93/guard-core-php | grep -E '^(name|versions)'
+
+      - name: PHPStan against master
+        run: vendor/bin/phpstan analyse --memory-limit=1024M --no-progress
+
+      - name: Unit tests against master
+        env:
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: '6420'
+        run: vendor/bin/phpunit
+
+  upstream-drift-espocrm:
+    name: Test against EspoCRM master
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6420:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - name: Checkout espocrm-guard
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.4'
+          extensions: mbstring
+          coverage: none
+          ini-values: memory_limit=1024M
+
+      - name: Install dependencies and build site from EspoCRM master
+        run: |
+          composer install --no-interaction --no-progress
+          .github/scripts/prepare-site.sh master
+
+      - name: PHPStan against EspoCRM master
+        run: vendor/bin/phpstan analyse --memory-limit=1024M --no-progress
+
+      - name: Unit tests against EspoCRM master
+        env:
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: '6420'
+        run: vendor/bin/phpunit
