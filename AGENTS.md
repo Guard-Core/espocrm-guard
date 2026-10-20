@@ -75,7 +75,7 @@ docs/, mkdocs.yml, .mike.yml                    docs site
 - PHP `>=8.2`; EspoCRM `>=9.0.0`. CI matrix: EspoCRM 9.0.0 on PHP 8.2, 8.3, 8.4 and EspoCRM stable on PHP 8.3, 8.4, 8.5.
 - Dev tooling (root `composer.json`): `phpunit/phpunit ^11.5` (the root `composer.lock` is tracked and resolved for the `config.platform` PHP 8.2, so every PHP from 8.2 to 8.5 runs the same PHPUnit 11.5) and `phpstan/phpstan ^2.1` at level 8, scanning `site/`.
 - Module libraries: `rennf93/psr15-guard ^1.6.1` (and guard-core-php through it).
-- Extension tooling: `espo-extension-tools#0.4.5` (Node 22, npm).
+- Extension tooling: `espo-extension-tools#0.4.6` (Node 22, npm).
 - Actions are pinned by commit SHA with a version comment.
 - Examples run the official `espocrm/espocrm` image (10.0.10-apache), MariaDB 11.4, Redis 7 and nginx 1.27.
 
