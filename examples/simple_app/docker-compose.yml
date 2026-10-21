@@ -36,7 +36,7 @@ services:
       ESPOCRM_ADMIN_PASSWORD: example-admin-password
       ESPOCRM_SITE_URL: http://localhost:8080
     ports:
-      - "8080:80"
+      - "8080:8080"
     volumes:
       - custom:/var/www/html/custom
       - data:/var/www/html/data

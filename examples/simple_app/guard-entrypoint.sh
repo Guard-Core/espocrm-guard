@@ -9,7 +9,7 @@ if [[ "${1-}" == apache2* ]]; then
       sleep 3
     done
 
-    if runuser -u www-data -- /opt/guard/guard-setup.sh; then
+    if /opt/guard/guard-setup.sh; then
       touch /tmp/guard-ready
     else
       echo "error: the guard setup failed" >&2
