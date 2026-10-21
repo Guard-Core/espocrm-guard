@@ -70,7 +70,9 @@ jobs:
           composer config repositories.guard-core-php path "$GITHUB_WORKSPACE/upstream/guard-core-php"
           composer require --no-update --no-interaction "rennf93/psr15-guard:dev-master as 1.99.0" "rennf93/guard-core-php:dev-master as 4.99.0"
           composer update --no-interaction --no-progress "rennf93/*"
-          composer show rennf93/psr15-guard rennf93/guard-core-php | grep -E '^(name|versions)'
+          for package in rennf93/psr15-guard rennf93/guard-core-php; do
+            composer show "$package" | grep -E '^(name|versions)'
+          done
 
       - name: PHPStan against master
         run: vendor/bin/phpstan analyse --memory-limit=1024M --no-progress
