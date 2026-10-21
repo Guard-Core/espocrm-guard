@@ -5,11 +5,13 @@ on:
     branches: [master]
     paths:
       - 'Dockerfile'
+      - '**/Dockerfile'
       - 'examples/*/Dockerfile'
       - '.github/workflows/docksec.yml'
   pull_request:
     paths:
       - 'Dockerfile'
+      - '**/Dockerfile'
       - 'examples/*/Dockerfile'
       - '.github/workflows/docksec.yml'
   schedule:
