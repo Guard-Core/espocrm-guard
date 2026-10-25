@@ -4,10 +4,16 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "02:00"
+      timezone: "UTC"
   - package-ecosystem: "composer"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "02:00"
+      timezone: "UTC"
     groups:
       dependencies:
         patterns:
@@ -16,6 +22,9 @@ updates:
     directory: "/src/files/custom/Espo/Modules/GuardCore"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "02:00"
+      timezone: "UTC"
     groups:
       dependencies:
         patterns:
@@ -24,6 +33,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "02:00"
+      timezone: "UTC"
     groups:
       dependencies:
         patterns:
