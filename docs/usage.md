@@ -5,7 +5,7 @@ With only `guardEnabled` set to true you get the default policy:
 - Passive mode: what would be blocked is logged, nothing is blocked.
 - Attack screening of paths, query strings, headers and JSON or form bodies is on.
 - No body scan on `POST /api/v1/Attachment/chunk/`.
-- A ban rule after more than 10 responses with status 401 in 5 minutes on `GET /api/v1/App/user` and on the API prefix.
+- A ban rule after more than 10 responses with status 401 in 5 minutes on `GET /api/v1/App/user` and on every other API path (counted per path).
 - Rate limits on `POST /api/v1/LeadCapture/` (10 per minute) and on the two password routes (5 per 5 minutes).
 
 ## Rolling out
@@ -18,6 +18,8 @@ With only `guardEnabled` set to true you get the default policy:
 Redis matters for steps 3 and 4: without it the rate limits and bans do not hold across requests.
 
 ## Route policies
+
+[Route policies](routes.md) explains how a request finds its route, what switching a default route off does, and every option and behavior rule key with its unit.
 
 ```php
 'guard' => [

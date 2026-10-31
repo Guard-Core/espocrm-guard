@@ -33,5 +33,6 @@ nav:
   - Installation: installation.md
   - Configuration: configuration.md
   - Usage and default policy: usage.md
+  - Route policies: routes.md
   - Telemetry agent: telemetry-agent.md
   - What it covers and does not: coverage.md
