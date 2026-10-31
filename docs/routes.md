@@ -1,16 +1,17 @@
 # Route policies
 
-A route policy is a set of extra rules for one API path: a rate limit, a ban rule, a size limit, a scan exclusion. You add them under `guard.routes` in `data/config.php` and clear the cache (`php command.php clear-cache`).
+A route policy is a set of extra rules for one API path: a rate limit, a ban rule, a size limit, a scan exclusion. You add them under `guardCore.routes` in `data/config-internal.php` and clear the cache (`php command.php clear-cache`).
 
 ```php
-'guard' => [
+'guardCore' => [
+    'enabled' => true,
     'routes' => [
         'POST /api/v1/LeadCapture/' => ['rateLimit' => 3, 'rateLimitWindow' => 60],
     ],
 ],
 ```
 
-Requests that match no route policy still get everything set at the `guard` level (attack screening, bans, the global rate limit).
+Requests that match no route policy still get everything set at the `guardCore` level (attack screening, bans, the global rate limit).
 
 ## How a request finds its policy
 
@@ -21,7 +22,7 @@ Requests that match no route policy still get everything set at the `guard` leve
 
 ## Default routes
 
-With only `guardEnabled` set, these routes are active:
+With only `guardCore.enabled` set, these routes are active:
 
 | Route | What it does |
 | --- | --- |
@@ -38,7 +39,8 @@ With only `guardEnabled` set, these routes are active:
 - A route set to `null` switches the default route off: the extension removes it, and requests to that path fall back to the next matching route, usually `/api/v1/`.
 
 ```php
-'guard' => [
+'guardCore' => [
+    'enabled' => true,
     'routes' => [
         // Lead capture: 3 requests per minute instead of 10.
         'POST /api/v1/LeadCapture/' => ['rateLimit' => 3, 'rateLimitWindow' => 60],
@@ -82,7 +84,7 @@ Patterns for `return_pattern`:
 | `regex:...` | A response body that matches the regular expression, case insensitive |
 | any other text | A response body that contains the text, case insensitive |
 
-Only `status:` patterns work out of the box. The other three read the response body, so they need `'behaviorScanResponseBody' => true` at the `guard` level; without it a route rule with such a pattern never matches. The body is read up to 262144 bytes (`behaviorMaxResponseBodyInspectBytes`).
+Only `status:` patterns work out of the box. The other three read the response body, so they need `'behaviorScanResponseBody' => true` at the `guardCore` level; without it a route rule with such a pattern never matches. The body is read up to 262144 bytes (`behaviorMaxResponseBodyInspectBytes`).
 
 Actions:
 
@@ -99,7 +101,7 @@ Things to know:
 - The rule acts after the request that crosses the threshold is answered: that request goes through, the ban applies from the next one.
 - In passive mode (the default) nothing is banned. You get a `[PASSIVE MODE] Would ban IP ...` line instead.
 - Without Redis the counts start from zero on every request under PHP-FPM, so a rule never fires. Set `enableRedis` and `redisUrl` (see [Configuration](configuration.md#redis)).
-- `correlate_with_detection` is accepted but only changes global rules (`globalBehaviorRules` at the `guard` level), not route rules.
+- `correlate_with_detection` is accepted but only changes global rules (`globalBehaviorRules` at the `guardCore` level), not route rules.
 
 ## All route options
 
@@ -129,7 +131,7 @@ Every key below goes inside a route, next to `behaviorRules`. An unknown key mak
 | `blockedUserAgents` | `['sqlmap', 'python-requests']` | A `User-Agent` that matches one of these regular expressions (case insensitive, anywhere in the text) gets 403. Adds to the global list |
 | `timeRestrictions` | `['start' => '09:00', 'end' => '18:00', 'timezone' => 'Europe/Rome']` | Outside the window, 403. 24 hour `HH:MM` with leading zeros, timezone optional (default UTC). A start after the end is an overnight window |
 | `requireReferrer` | `['example.com']` | A request without `Referer` or with a `Referer` from another domain gets 403. Subdomains count |
-| `requireHttps` | `true` | A plain HTTP request gets a 301 to the https URL. Behind a TLS proxy set `trustXForwardedProto` and `trustedProxies` at the `guard` level, or every request looks like HTTP |
+| `requireHttps` | `true` | A plain HTTP request gets a 301 to the https URL. Behind a TLS proxy set `trustXForwardedProto` and `trustedProxies` at the `guardCore` level, or every request looks like HTTP |
 
 Client IPs come from `REMOTE_ADDR` unless `trustedProxies` is set (see [Configuration](configuration.md#trusted-proxies-and-ipaddressserverparam)).
 

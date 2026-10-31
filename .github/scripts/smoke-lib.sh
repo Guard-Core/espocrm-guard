@@ -25,14 +25,14 @@ expect() {
   echo "ok: $name -> $code"
 }
 
-# settings_hide_guard <base url>: GET /api/v1/Settings must not carry guard or guardEnabled, for the admin.
+# settings_hide_guard <base url>: GET /api/v1/Settings must not carry guardCore, guard or guardEnabled, for the admin.
 settings_hide_guard() {
   expect "GET /api/v1/Settings answers" 200 -u "$SMOKE_USER:$SMOKE_PASSWORD" "$1/api/v1/Settings"
-  if grep -Eq '"guard(Enabled)?"' "$SMOKE_BODY"; then
-    echo "FAIL: the Settings API exposes guard or guardEnabled"
+  if grep -Eq '"guard(Core|Enabled)?"' "$SMOKE_BODY"; then
+    echo "FAIL: the Settings API exposes guardCore, guard or guardEnabled"
     exit 1
   fi
-  echo "ok: guard and guardEnabled are absent from GET /api/v1/Settings"
+  echo "ok: guardCore, guard and guardEnabled are absent from GET /api/v1/Settings"
 }
 
 # log_contains <compose args...> -- <pattern>: greps EspoCRM's log files in the espocrm service.

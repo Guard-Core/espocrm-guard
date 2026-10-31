@@ -169,15 +169,15 @@ The extension registers one global API middleware (`globalMiddlewareClassNameLis
 1. Download `guard-core-<version>.zip` from the [latest release](https://github.com/Guard-Core/espocrm-guard/releases/latest) (or build it, see Testing).
 2. In EspoCRM open Administration > Extensions, upload the zip and click Install.
 
-Installing changes nothing: `guardEnabled` is absent, so the middleware passes every request straight through. Uninstalling removes the middleware and also deletes `guardEnabled` and `guard` from the config files. That is on purpose: the extension hides `guard` (it can hold a Redis URL and an agent API key) from the Settings API, and once it is gone nothing would hide those values from logged-in users. Keep a copy of your `guard` block if you plan to reinstall.
+Installing changes nothing: `guardCore` is absent, so the middleware passes every request straight through. Upgrading from 1.0.0 moves `guardEnabled` and `guard` under `guardCore` automatically. Uninstalling removes the middleware and also deletes `guardCore` (and the old `guardEnabled` and `guard`) from the config files. That is on purpose: the extension hides `guardCore` (it can hold a Redis URL and an agent API key) from the Settings API, and once it is gone nothing would hide those values from logged-in users. Keep a copy of your `guardCore` block if you plan to reinstall.
 
 ## Usage
 
-Add the keys to `data/config.php` (or `data/config-internal.php`). They are not editable in the admin UI and are never sent to the front end.
+Add one key, `guardCore`, to `data/config-internal.php` (EspoCRM stores level `system` parameters there and rewrites them there on any config save). It is not editable in the admin UI and is never sent to the front end.
 
 ```php
-'guardEnabled' => true,
-'guard' => [
+'guardCore' => [
+    'enabled' => true,
     'enableRedis' => true,
     'redisUrl' => 'redis://127.0.0.1:6379',
     'redisPrefix' => 'espocrm_guard:',
@@ -190,7 +190,7 @@ Add the keys to `data/config.php` (or `data/config-internal.php`). They are not 
 
 Clear the cache after changing the config (`php command.php clear-cache`).
 
-With only `guardEnabled` set to true you get the default policy:
+With only `'enabled' => true` set you get the default policy:
 
 - Passive mode: what would be blocked is logged, nothing is blocked.
 - Attack screening of paths, query strings, headers and JSON or form bodies is on.
@@ -198,7 +198,7 @@ With only `guardEnabled` set to true you get the default policy:
 - A ban rule after more than 10 responses with status 401 in 5 minutes on `GET /api/v1/App/user` and on every other API path (counted per path).
 - Rate limits on `POST /api/v1/LeadCapture/` (10 per minute) and on the two password routes (5 per 5 minutes).
 
-Start in passive mode, watch `data/logs` for `Guard would block by ...` lines, then set `'passiveMode' => false`. Settings you give override the defaults key by key. A route key is an optional method plus a path, and a `null` route entry switches a default route off. Every engine option is a key of `guard` (the named arguments of the engine's `SecurityConfig`), and every route option a key of a route (`RouteConfig`). An unknown key or an invalid route option throws instead of being ignored. Options that need a closure or an object (`onBlock`, `authVerifier`, `customRequestCheck` and similar) cannot be expressed in a config file and are rejected.
+Start in passive mode, watch `data/logs` for `Guard would block by ...` lines, then set `'passiveMode' => false`. Settings you give override the defaults key by key. A route key is an optional method plus a path, and a `null` route entry switches a default route off. Every other engine option is a key of `guardCore` (the named arguments of the engine's `SecurityConfig`), and every route option a key of a route (`RouteConfig`). An unknown key or an invalid route option throws instead of being ignored. Options that need a closure or an object (`onBlock`, `authVerifier`, `customRequestCheck` and similar) cannot be expressed in a config file and are rejected.
 
 ### Redis
 
@@ -206,7 +206,7 @@ Redis is off by default. Without it, rate limits, behavior rules and bans keep t
 
 ### Trusted proxies and `ipAddressServerParam`
 
-The guard identifies the client by `REMOTE_ADDR`. EspoCRM's `ipAddressServerParam` is not read. If you set it to something else (for example `HTTP_X_FORWARDED_FOR`), the guard logs a warning, and behind a proxy you must set `guard.trustedProxies` (and `guard.trustedProxyDepth`) so the client is resolved from the forwarded header. Without that every client behind the proxy looks like the proxy.
+The guard identifies the client by `REMOTE_ADDR`. EspoCRM's `ipAddressServerParam` is not read. If you set it to something else (for example `HTTP_X_FORWARDED_FOR`), the guard logs a warning, and behind a proxy you must set `guardCore.trustedProxies` (and `guardCore.trustedProxyDepth`) so the client is resolved from the forwarded header. Without that every client behind the proxy looks like the proxy.
 
 ### Examples
 
@@ -220,7 +220,7 @@ The [guard-agent-php](https://packagist.org/packages/rennf93/guard-agent-php) ag
 composer require rennf93/guard-agent-php
 ```
 
-then add an `agent` map to `guard`. The extension loads the agent only when the package is present, and fails with a clear message when `agent` is configured without it. An EspoCRM upgrade replaces `vendor/`, so run the command again after upgrading.
+then add an `agent` map to `guardCore`. The extension loads the agent only when the package is present, and fails with a clear message when `agent` is configured without it. An EspoCRM upgrade replaces `vendor/`, so run the command again after upgrading.
 
 ## What it covers
 

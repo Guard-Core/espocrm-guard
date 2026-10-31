@@ -18,7 +18,7 @@ jobs:
             Thanks for opening your first issue on **espocrm-guard**!
 
             To help us triage quickly, please make sure your report includes:
-            - A clear reproduction (the `guard` config and the request you sent are ideal)
+            - A clear reproduction (the `guardCore` config and the request you sent are ideal)
             - Output of `php -v` (the extension requires PHP 8.2 or later) and your EspoCRM version
             - The extension version and the `rennf93/psr15-guard` and `rennf93/guard-core-php` versions in the module's `vendor/`
             - Whether EspoCRM runs behind a reverse proxy, and the `guard.trustedProxies` you set

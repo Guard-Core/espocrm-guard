@@ -76,7 +76,7 @@ class GuardMiddlewareBuilder
 
         $this->log->warning(
             "Guard: ipAddressServerParam is '$param', but the guard identifies the client by REMOTE_ADDR only. " .
-            "Set guard.trustedProxies (and guard.trustedProxyDepth) to resolve the client behind a proxy."
+            "Set guardCore.trustedProxies (and guardCore.trustedProxyDepth) to resolve the client behind a proxy."
         );
     }
 

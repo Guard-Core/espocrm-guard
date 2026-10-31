@@ -9,8 +9,8 @@ use RenzoFranceschini\GuardCore\GeoIp\CountryResolver;
 use RenzoFranceschini\GuardCore\Config\SecurityConfig;
 
 /**
- * Maps the `guard` settings onto the named arguments of the engine's `SecurityConfig`, so every engine option is
- * available from `data/config.php`. An unknown key fails loudly.
+ * Maps the `guardCore` settings onto the named arguments of the engine's `SecurityConfig`, so every engine option is
+ * available from the config. An unknown key fails loudly.
  */
 class SecurityConfigBuilder
 {

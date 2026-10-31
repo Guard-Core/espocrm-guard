@@ -3,10 +3,10 @@ Guidance for AI agents (including Claude Code) working in this repository.
 
 ## Project Overview
 
-Guard-Core/espocrm-guard (https://github.com/Guard-Core/espocrm-guard) is an EspoCRM extension, "Guard Core for EspoCRM". It registers the psr15-guard middleware as a global API middleware (`globalMiddlewareClassNameList`) so the guard-core-php engine screens `public/api/v1/` and the portal API. It is off until `guardEnabled` is true, and the keys `guardEnabled` and `guard` are hidden from the Settings API (level `system`).
+Guard-Core/espocrm-guard (https://github.com/Guard-Core/espocrm-guard) is an EspoCRM extension, "Guard Core for EspoCRM". It registers the psr15-guard middleware as a global API middleware (`globalMiddlewareClassNameList`) so the guard-core-php engine screens `public/api/v1/` and the portal API. It is off until `guardCore.enabled` is true. The single root key `guardCore` (a map: `enabled` plus every setting) is hidden from the Settings API (level `system`), like the deprecated 1.0.0 keys `guardEnabled` and `guard`, which still work, log a deprecation warning and are migrated automatically on upgrade by `src/scripts/AfterInstall.php`.
 
 - The extension is distributed as a zip (`build/guard-core-<version>.zip`, built by `npm run extension`) that an administrator uploads under Administration > Extensions. It is not on Packagist or any registry. The module `composer.json` is named `rennf93/espocrm-guard-core` and only bundles `rennf93/psr15-guard` and, transitively, `rennf93/guard-core-php`.
-- This repository contains NO security logic. Detection, rate limiting, bans, headers and responses live in guard-core-php. The module reads the `guard` config, merges it with a default policy, builds the engine objects and wires them to EspoCRM's logger and config.
+- This repository contains NO security logic. Detection, rate limiting, bans, headers and responses live in guard-core-php. The module reads the `guardCore` config, merges it with a default policy, builds the engine objects and wires them to EspoCRM's logger and config.
 - EspoCRM `>=9.0.0` (`extension.json` `acceptableVersions`) and PHP `>=8.2`. The version lives in `package.json` (and `package-lock.json`); `extension.json` carries none, and the zip name takes it from `package.json`.
 - Releases are tag driven. `master` is protected: never push to it, never merge into it, never create tags or releases as part of agent work. Releases are immutable, so `release.yml` attaches the zip and its `.sha256` to a DRAFT release that the maintainer publishes.
 - Docs site: MkDocs Material in `docs/`, versioned with mike (`.mike.yml`), deployed by `docs.yml`. `mkdocs.yml` sets `site_dir: docs_site` because `site/` is the EspoCRM checkout: a default `mkdocs build` would wipe it.
@@ -15,7 +15,7 @@ Guard-Core/espocrm-guard (https://github.com/Guard-Core/espocrm-guard) is an Esp
 
 - `rennf93/guard-core-php` (https://github.com/Guard-Core/guard-core-php) is the engine. It owns `SecurityConfig`, `RouteConfig`, `GuardEngine`, `RedisHandler`, `BehaviorRule` and every verdict.
 - `rennf93/psr15-guard` (https://github.com/Guard-Core/psr15-guard) is the PSR-15 adapter this module composes: `GuardMiddleware` takes the engine, PSR-17 factories, the route map and an optional agent handler. The module floors it at `^1.6.1`.
-- This repository is the EspoCRM adapter layer: `Api\Middleware` is the EspoCRM middleware, `Api\GuardMiddlewareBuilder` wires logger, Redis, country database and agent, `Api\SecurityConfigBuilder` and `Api\RouteConfigBuilder` map the `guard` array onto `SecurityConfig` and `RouteConfig`, `Api\DefaultPolicy` is the policy applied when `guardEnabled` is true, `Api\GuardAgentFactory` creates the optional agent.
+- This repository is the EspoCRM adapter layer: `Api\Middleware` is the EspoCRM middleware, `Api\GuardMiddlewareBuilder` wires logger, Redis, country database and agent, `Api\SecurityConfigBuilder` and `Api\RouteConfigBuilder` map the `guardCore` settings onto `SecurityConfig` and `RouteConfig`, `Api\DefaultPolicy` is the policy applied when the guard is enabled, `Api\GuardAgentFactory` creates the optional agent.
 - `rennf93/guard-agent-php` is the optional telemetry agent. It is resolved by name and is not a dependency; the operator runs `composer require rennf93/guard-agent-php` in the EspoCRM root.
 - `psr/http-*` and Slim come from EspoCRM itself. The module `composer.json` `replace`s the four `psr/http-*` packages so none ends up in the zip, and `GuardMiddlewareBuilder` uses EspoCRM's `Slim\Psr7` factories.
 
@@ -24,9 +24,9 @@ Guard-Core/espocrm-guard (https://github.com/Guard-Core/espocrm-guard) is an Esp
 The extension wires; the engine decides.
 
 - MUST NOT implement detection rules, penetration signatures, rate limiting, IP banning, security headers or CORS. The extension only translates config into engine objects and copies nothing but the engine's verdicts.
-- MUST stay opt-in: `Middleware::process()` returns `$handler->handle($request)` and builds nothing unless `guardEnabled` is true.
-- MUST fail loudly on bad config: an unknown `guard` key, an unknown route option, an invalid behavior rule, an unsupported Redis URL or an `agent` map without the agent package throws instead of being ignored.
-- MUST keep `guard` and `guardEnabled` out of every API response: `Resources/metadata/app/config.json` declares both at level `system`, and `src/scripts/AfterUninstall.php` removes both from the config files when the module is uninstalled.
+- MUST stay opt-in: `Middleware::process()` returns `$handler->handle($request)` and builds nothing unless `guardCore.enabled` (or the deprecated `guardEnabled`) is true.
+- MUST fail loudly on bad config: an unknown `guardCore` key, `guardCore` that is not a map, settings split between `guardCore` and the old keys, an unknown route option, an invalid behavior rule, an unsupported Redis URL or an `agent` map without the agent package throws instead of being ignored.
+- MUST keep `guardCore`, `guard` and `guardEnabled` out of every API response: `Resources/metadata/app/config.json` declares all three at level `system`, and `src/scripts/AfterUninstall.php` removes all three from the config files when the module is uninstalled.
 - MUST NOT bundle `psr/*` or Slim in the zip. `.github/scripts/check-extension-zip.sh` checks the zip contents and size on every CI build and release.
 - MUST NOT log or store anything beyond the engine verdict lines (check name, reason, client IP, method, path, status) it writes through EspoCRM's logger.
 
@@ -59,9 +59,10 @@ The extension wires; the engine decides.
 src/files/custom/Espo/Modules/GuardCore/Api/    the module classes
 src/files/custom/Espo/Modules/GuardCore/Resources/  module.json, autoload.json, metadata/app/{api,config}.json
 src/files/custom/Espo/Modules/GuardCore/composer.json, composer.lock  module libraries (the lock is what ships)
-src/scripts/AfterUninstall.php                  removes guardEnabled and guard on uninstall
+src/scripts/AfterInstall.php                    migrates guardEnabled and guard into guardCore on install and upgrade
+src/scripts/AfterUninstall.php                  removes guardCore, guardEnabled and guard on uninstall
 .agents/skills/espocrm-guard/SKILL.md           agent skill (outside src/, so it is not in the zip)
-tests/unit/Espo/Modules/GuardCore/              PHPUnit suite (MiddlewareTest, GuardAgentFactoryTest, AfterUninstallTest)
+tests/unit/Espo/Modules/GuardCore/              PHPUnit suite (MiddlewareTest, GuardAgentFactoryTest, AfterInstallTest, AfterUninstallTest)
 php_scripts/, build.js, config-default.json     espo-extension-tools helpers and build
 examples/simple_app, examples/advanced_app      Docker Compose stacks with a real EspoCRM and the built zip
 docs/, mkdocs.yml, .mike.yml                    docs site

@@ -23,7 +23,7 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: |
-        1. Set the 'guard' config to '...'
+        1. Set the 'guardCore' config to '...'
         2. Send a request to '...'
         3. See error
     validations:
@@ -40,11 +40,11 @@ body:
     id: config
     attributes:
       label: Configuration
-      description: The `guard` array from data/config.php with secrets (Redis URL, agent API key) masked.
+      description: The `guardCore` array from data/config-internal.php with secrets (Redis URL, agent API key) masked.
       render: php
       placeholder: |
-        'guardEnabled' => true,
-        'guard' => [
+        'guardCore' => [
+            'enabled' => true,
             'passiveMode' => false,
         ],
   - type: textarea

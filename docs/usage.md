@@ -1,6 +1,6 @@
 # Usage and default policy
 
-With only `guardEnabled` set to true you get the default policy:
+With only `'enabled' => true` under `guardCore` you get the default policy:
 
 - Passive mode: what would be blocked is logged, nothing is blocked.
 - Attack screening of paths, query strings, headers and JSON or form bodies is on.
@@ -10,7 +10,7 @@ With only `guardEnabled` set to true you get the default policy:
 
 ## Rolling out
 
-1. Set `'guardEnabled' => true` and clear the cache.
+1. Set `'guardCore' => ['enabled' => true]` and clear the cache.
 2. Watch `data/logs` for `Guard would block by ...` lines. Each line names the check, the reason and the client, and the request still passes.
 3. Fix or exclude what is a false positive, for example with a route policy.
 4. Set `'passiveMode' => false`. Blocked requests now log `Guard blocked by ...` and get the engine's response (400 for a detected attack, 403 for a banned client, 429 for a rate limit).
@@ -22,7 +22,8 @@ Redis matters for steps 3 and 4: without it the rate limits and bans do not hold
 [Route policies](routes.md) explains how a request finds its route, what switching a default route off does, and every option and behavior rule key with its unit.
 
 ```php
-'guard' => [
+'guardCore' => [
+    'enabled' => true,
     'routes' => [
         // A stricter lead capture limit.
         'POST /api/v1/LeadCapture/' => ['rateLimit' => 3, 'rateLimitWindow' => 60],

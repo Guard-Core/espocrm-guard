@@ -6,10 +6,11 @@ The [guard-agent-php](https://packagist.org/packages/rennf93/guard-agent-php) ag
 composer require rennf93/guard-agent-php
 ```
 
-then add an `agent` map to `guard`:
+then add an `agent` map to `guardCore`:
 
 ```php
-'guard' => [
+'guardCore' => [
+    'enabled' => true,
     'agent' => ['apiKey' => 'your-project-api-key'],
 ],
 ```
@@ -18,4 +19,4 @@ The extension loads the agent only when the package is present, and fails with a
 
 An EspoCRM upgrade replaces `vendor/`, so run the `composer require` command again after upgrading.
 
-The agent API key lives in `guard`, which is hidden from the Settings API.
+The agent API key lives in `guardCore`, which is hidden from the Settings API.

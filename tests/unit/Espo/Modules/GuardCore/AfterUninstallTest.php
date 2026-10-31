@@ -2,35 +2,36 @@
 
 namespace tests\unit\Espo\Modules\GuardCore;
 
-use Espo\Core\Container;
-use Espo\Core\InjectableFactory;
-use Espo\Core\Utils\Config\ConfigWriter;
-use PHPUnit\Framework\TestCase;
-
 require_once __DIR__ . '/../../../../../src/scripts/AfterUninstall.php';
 
-class AfterUninstallTest extends TestCase
+class AfterUninstallTest extends RealConfigFilesTestCase
 {
-    public function testRemovesTheGuardKeysFromTheConfigFilesAndSaves(): void
+    public function testRemovesEveryGuardKeyFromBothConfigFilesAndKeepsTheRest(): void
     {
-        $removed = [];
+        $this->writeConfigFile('config.php', ['siteUrl' => 'https://crm.test', 'guardEnabled' => true, 'guard' => []]);
+        $this->writeConfigFile('config-internal.php', [
+            'passwordSalt' => 'salt',
+            'guardCore' => ['enabled' => true, 'redisUrl' => 'redis://:secret@redis:6379'],
+            'guard' => ['passiveMode' => false],
+        ]);
 
-        $configWriter = $this->createMock(ConfigWriter::class);
-        $configWriter->expects(self::exactly(2))
-            ->method('remove')
-            ->willReturnCallback(function (string $name) use (&$removed): void {
-                $removed[] = $name;
-            });
-        $configWriter->expects(self::once())->method('save');
+        (new \AfterUninstall())->run($this->container());
 
-        $factory = $this->createMock(InjectableFactory::class);
-        $factory->expects(self::once())->method('create')->with(ConfigWriter::class)->willReturn($configWriter);
+        foreach (['config.php', 'config-internal.php'] as $file) {
+            $this->assertSame([], array_intersect(['guardCore', 'guardEnabled', 'guard'], array_keys($this->readConfigFile($file))), $file);
+        }
 
-        $container = $this->createMock(Container::class);
-        $container->expects(self::once())->method('getByClass')->with(InjectableFactory::class)->willReturn($factory);
+        $this->assertSame('https://crm.test', $this->readConfigFile('config.php')['siteUrl']);
+        $this->assertSame('salt', $this->readConfigFile('config-internal.php')['passwordSalt']);
+    }
 
-        (new \AfterUninstall())->run($container);
+    public function testRemovesTheKeysThatLiveInConfigPhpOnly(): void
+    {
+        $this->writeConfigFile('config.php', ['guardCore' => ['enabled' => true], 'guardEnabled' => true, 'guard' => []]);
 
-        $this->assertSame(['guardEnabled', 'guard'], $removed);
+        (new \AfterUninstall())->run($this->container());
+
+        $this->assertSame([], array_intersect(['guardCore', 'guardEnabled', 'guard'], array_keys($this->readConfigFile('config.php'))));
+        $this->assertSame([], array_intersect(['guardCore', 'guardEnabled', 'guard'], array_keys($this->readConfigFile('config-internal.php'))));
     }
 }

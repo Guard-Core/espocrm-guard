@@ -38,7 +38,7 @@ jobs:
               If it's still relevant, please leave a comment, otherwise it will be closed in 14 days.
 
               Things that help keep an issue moving:
-              - A current reproduction (the `guard` config and the request)
+              - A current reproduction (the `guardCore` config and the request)
               - Output of `php -v` and your EspoCRM and extension versions
               - Any new findings since the last activity
 

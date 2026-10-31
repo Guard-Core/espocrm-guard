@@ -8,15 +8,15 @@ description: Use when an agent works in Guard-Core/espocrm-guard or touches its 
 ## Quick Reference
 
 - EspoCRM extension "Guard Core", module `GuardCore`, namespace `Espo\Modules\GuardCore\Api`. EspoCRM `>=9.0.0`, PHP `>=8.2`.
-- Registers `Espo\Modules\GuardCore\Api\Middleware` as a global API middleware. It does nothing until `guardEnabled` is true in `data/config.php`.
-- `guard` is the settings map: every engine option is a `SecurityConfig` argument, every route option a `RouteConfig` argument. Unknown keys throw. Closures and objects cannot be configured.
-- `guard` and `guardEnabled` are level `system` in `Resources/metadata/app/config.json`, so the Settings API never returns them. `src/scripts/AfterUninstall.php` removes them on uninstall.
+- Registers `Espo\Modules\GuardCore\Api\Middleware` as a global API middleware. It does nothing until `guardCore.enabled` is true in `data/config-internal.php`.
+- `guardCore` is the settings map (`enabled` plus every setting): every engine option is a `SecurityConfig` argument, every route option a `RouteConfig` argument. Unknown keys throw. Closures and objects cannot be configured.
+- `guardCore`, `guard` and `guardEnabled` are level `system` in `Resources/metadata/app/config.json`, so the Settings API never returns them. `src/scripts/AfterUninstall.php` removes them on uninstall. `guardEnabled` and `guard` are the deprecated 1.0.0 keys: they still work with a warning, and `src/scripts/AfterInstall.php` moves them under `guardCore` on upgrade. Both at once while enabled is an error.
 - The extension holds no security logic. Every verdict comes from guard-core-php through psr15-guard.
 - Commands: `make prepare-test`, `make lint`, `make local-test` (Redis on 127.0.0.1:6420), `make test` (Docker), `make extension`, `make bump-version VERSION=x.y.z`.
 
 ## Default policy
 
-With only `guardEnabled` set: passive mode, attack screening on, no body scan on `POST /api/v1/Attachment/chunk/`, a ban after more than 10 responses with status 401 in 5 minutes on `GET /api/v1/App/user` and `/api/v1/`, rate limits on `POST /api/v1/LeadCapture/` (10 per minute) and the two password routes (5 per 5 minutes). Operator keys override key by key, a `null` route entry switches a default route off.
+With only `guardCore.enabled` set: passive mode, attack screening on, no body scan on `POST /api/v1/Attachment/chunk/`, a ban after more than 10 responses with status 401 in 5 minutes on `GET /api/v1/App/user` and `/api/v1/`, rate limits on `POST /api/v1/LeadCapture/` (10 per minute) and the two password routes (5 per 5 minutes). Operator keys override key by key, a `null` route entry switches a default route off.
 
 ## Gotchas
 
