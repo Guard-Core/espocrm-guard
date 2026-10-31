@@ -760,15 +760,14 @@
 
 
 <h1 id="route-policies">Route policies</h1>
-<p>A route policy is a set of extra rules for one API path: a rate limit, a ban rule, a size limit, a scan exclusion. You add them under <code>guardCore.routes</code> in <code>data/config-internal.php</code> and clear the cache (<code>php command.php clear-cache</code>).</p>
-<div class="highlight"><pre><span></span><code><span class="x">'guardCore' =&gt; [</span>
-<span class="x">    'enabled' =&gt; true,</span>
+<p>A route policy is a set of extra rules for one API path: a rate limit, a ban rule, a size limit, a scan exclusion. You add them under <code>guard.routes</code> in <code>data/config.php</code> and clear the cache (<code>php command.php clear-cache</code>).</p>
+<div class="highlight"><pre><span></span><code><span class="x">'guard' =&gt; [</span>
 <span class="x">    'routes' =&gt; [</span>
 <span class="x">        'POST /api/v1/LeadCapture/' =&gt; ['rateLimit' =&gt; 3, 'rateLimitWindow' =&gt; 60],</span>
 <span class="x">    ],</span>
 <span class="x">],</span>
 </code></pre></div>
-<p>Requests that match no route policy still get everything set at the <code>guardCore</code> level (attack screening, bans, the global rate limit).</p>
+<p>Requests that match no route policy still get everything set at the <code>guard</code> level (attack screening, bans, the global rate limit).</p>
 <h2 id="how-a-request-finds-its-policy">How a request finds its policy</h2>
 <ul>
 <li>A key is an optional HTTP method plus a path: <code>'POST /api/v1/LeadCapture/'</code> or <code>'/api/v1/'</code>. Without a method the key matches every method.</li>
@@ -777,7 +776,7 @@
 <li>A request gets exactly one route policy. A more specific route replaces the options of a prefix route, it does not add to them. For example the default <code>POST /api/v1/LeadCapture/</code> route has only a rate limit, so the repeated-401 ban rule of the <code>/api/v1/</code> route does not apply to lead capture requests. If you want both, put both in the specific route.</li>
 </ul>
 <h2 id="default-routes">Default routes</h2>
-<p>With only <code>guardCore.enabled</code> set, these routes are active:</p>
+<p>With only <code>guardEnabled</code> set, these routes are active:</p>
 <table>
 <thead>
 <tr>
@@ -817,8 +816,7 @@
 <li>A route you set with the same key as a default route replaces it as a whole. Options of the default route that you leave out are gone, so repeat the ones you want to keep.</li>
 <li>A route set to <code>null</code> switches the default route off: the extension removes it, and requests to that path fall back to the next matching route, usually <code>/api/v1/</code>.</li>
 </ul>
-<div class="highlight"><pre><span></span><code><span class="x">'guardCore' =&gt; [</span>
-<span class="x">    'enabled' =&gt; true,</span>
+<div class="highlight"><pre><span></span><code><span class="x">'guard' =&gt; [</span>
 <span class="x">    'routes' =&gt; [</span>
 <span class="x">        // Lead capture: 3 requests per minute instead of 10.</span>
 <span class="x">        'POST /api/v1/LeadCapture/' =&gt; ['rateLimit' =&gt; 3, 'rateLimitWindow' =&gt; 60],</span>
@@ -907,7 +905,7 @@
 </tr>
 </tbody>
 </table>
-<p>Only <code>status:</code> patterns work out of the box. The other three read the response body, so they need <code>'behaviorScanResponseBody' =&gt; true</code> at the <code>guardCore</code> level; without it a route rule with such a pattern never matches. The body is read up to 262144 bytes (<code>behaviorMaxResponseBodyInspectBytes</code>).</p>
+<p>Only <code>status:</code> patterns work out of the box. The other three read the response body, so they need <code>'behaviorScanResponseBody' =&gt; true</code> at the <code>guard</code> level; without it a route rule with such a pattern never matches. The body is read up to 262144 bytes (<code>behaviorMaxResponseBodyInspectBytes</code>).</p>
 <p>Actions:</p>
 <table>
 <thead>
@@ -941,7 +939,7 @@
 <li>The rule acts after the request that crosses the threshold is answered: that request goes through, the ban applies from the next one.</li>
 <li>In passive mode (the default) nothing is banned. You get a <code>[PASSIVE MODE] Would ban IP ...</code> line instead.</li>
 <li>Without Redis the counts start from zero on every request under PHP-FPM, so a rule never fires. Set <code>enableRedis</code> and <code>redisUrl</code> (see <a href="../configuration/#redis">Configuration</a>).</li>
-<li><code>correlate_with_detection</code> is accepted but only changes global rules (<code>globalBehaviorRules</code> at the <code>guardCore</code> level), not route rules.</li>
+<li><code>correlate_with_detection</code> is accepted but only changes global rules (<code>globalBehaviorRules</code> at the <code>guard</code> level), not route rules.</li>
 </ul>
 <h2 id="all-route-options">All route options</h2>
 <p>Every key below goes inside a route, next to <code>behaviorRules</code>. An unknown key makes the extension throw when it builds the guard, so a typo in a key name shows up as an error, not as a silent no-op. The status codes are what the client gets with <code>'passiveMode' =&gt; false</code>; in passive mode the request passes and the would-be block is logged.</p>
@@ -1036,7 +1034,7 @@
 <tr>
 <td><code>requireHttps</code></td>
 <td><code>true</code></td>
-<td>A plain HTTP request gets a 301 to the https URL. Behind a TLS proxy set <code>trustXForwardedProto</code> and <code>trustedProxies</code> at the <code>guardCore</code> level, or every request looks like HTTP</td>
+<td>A plain HTTP request gets a 301 to the https URL. Behind a TLS proxy set <code>trustXForwardedProto</code> and <code>trustedProxies</code> at the <code>guard</code> level, or every request looks like HTTP</td>
 </tr>
 </tbody>
 </table>
