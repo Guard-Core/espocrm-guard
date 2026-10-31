@@ -350,6 +350,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#build-from-source" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -541,6 +552,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#upgrade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrade
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#build-from-source" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -578,9 +600,11 @@
 <li>In EspoCRM open Administration &gt; Extensions, upload the zip and click Install.</li>
 </ol>
 <p>From the command line the same install is <code>php command.php extension --file=guard-core-&lt;version&gt;.zip</code>, run in the EspoCRM root directory.</p>
-<p>Installing changes nothing: <code>guardEnabled</code> is absent, so the middleware passes every request straight through. See <a href="../usage/">Usage and default policy</a> to turn it on.</p>
+<p>Installing changes nothing: <code>guardCore</code> is absent, so the middleware passes every request straight through. See <a href="../usage/">Usage and default policy</a> to turn it on.</p>
 <h2 id="uninstall">Uninstall</h2>
-<p>Uninstalling removes the middleware and also deletes <code>guardEnabled</code> and <code>guard</code> from the config files. That is on purpose: the extension hides <code>guard</code> (it can hold a Redis URL and an agent API key) from the Settings API, and once it is gone nothing would hide those values from logged-in users. Keep a copy of your <code>guard</code> block if you plan to reinstall.</p>
+<p>Uninstalling removes the middleware and also deletes <code>guardCore</code> (and the old <code>guardEnabled</code> and <code>guard</code>) from the config files. That is on purpose: the extension hides <code>guardCore</code> (it can hold a Redis URL and an agent API key) from the Settings API, and once it is gone nothing would hide those values from logged-in users. Keep a copy of your <code>guardCore</code> block if you plan to reinstall.</p>
+<h2 id="upgrade">Upgrade</h2>
+<p>Upgrading from 1.0.0 moves <code>guardEnabled</code> and <code>guard</code> under <code>guardCore</code> automatically. See <a href="../configuration/#upgrading-from-100">Configuration</a>.</p>
 <h2 id="build-from-source">Build from source</h2>
 <div class="highlight"><pre><span></span><code>npm<span class="w"> </span>ci
 npm<span class="w"> </span>run<span class="w"> </span>extension<span class="w">      </span><span class="c1"># builds build/guard-core-&lt;version&gt;.zip</span>

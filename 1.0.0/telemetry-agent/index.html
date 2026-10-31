@@ -486,14 +486,15 @@
 <p>The <a href="https://packagist.org/packages/rennf93/guard-agent-php">guard-agent-php</a> agent is optional and is not bundled. To use it, run in the EspoCRM root directory:</p>
 <div class="highlight"><pre><span></span><code>composer<span class="w"> </span>require<span class="w"> </span>rennf93/guard-agent-php
 </code></pre></div>
-<p>then add an <code>agent</code> map to <code>guard</code>:</p>
-<div class="highlight"><pre><span></span><code><span class="x">'guard' =&gt; [</span>
+<p>then add an <code>agent</code> map to <code>guardCore</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="x">'guardCore' =&gt; [</span>
+<span class="x">    'enabled' =&gt; true,</span>
 <span class="x">    'agent' =&gt; ['apiKey' =&gt; 'your-project-api-key'],</span>
 <span class="x">],</span>
 </code></pre></div>
 <p>The extension loads the agent only when the package is present, and fails with a clear message when <code>agent</code> is configured without it. When an agent is configured, <code>enableAgent</code> defaults to true. The agent is started with the first guarded request and flushes its buffer when the request ends.</p>
 <p>An EspoCRM upgrade replaces <code>vendor/</code>, so run the <code>composer require</code> command again after upgrading.</p>
-<p>The agent API key lives in <code>guard</code>, which is hidden from the Settings API.</p>
+<p>The agent API key lives in <code>guardCore</code>, which is hidden from the Settings API.</p>
 
 
 

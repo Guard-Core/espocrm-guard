@@ -366,6 +366,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#upgrading-from-100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading from 1.0.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#redis" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -552,6 +563,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#upgrading-from-100" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Upgrading from 1.0.0
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#redis" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -616,9 +638,9 @@
 
 
 <h1 id="configuration">Configuration</h1>
-<p>Add the keys to <code>data/config.php</code> (or <code>data/config-internal.php</code>). They are not editable in the admin UI and are never sent to the front end.</p>
-<div class="highlight"><pre><span></span><code><span class="x">'guardEnabled' =&gt; true,</span>
-<span class="x">'guard' =&gt; [</span>
+<p>Add one key, <code>guardCore</code>, to <code>data/config-internal.php</code>. EspoCRM stores level <code>system</code> config parameters there and rewrites them there on any config save, so a copy kept in <code>data/config.php</code> can end up shadowed or moved. The key is not editable in the admin UI and is never sent to the front end. It is the only root key the extension owns, so nothing collides with other extensions.</p>
+<div class="highlight"><pre><span></span><code><span class="x">'guardCore' =&gt; [</span>
+<span class="x">    'enabled' =&gt; true,</span>
 <span class="x">    'enableRedis' =&gt; true,</span>
 <span class="x">    'redisUrl' =&gt; 'redis://127.0.0.1:6379',</span>
 <span class="x">    'redisPrefix' =&gt; 'espocrm_guard:',</span>
@@ -629,15 +651,23 @@
 <span class="x">],</span>
 </code></pre></div>
 <p>Clear the cache after changing the config (<code>php command.php clear-cache</code>).</p>
-<p>Settings you give override the defaults key by key. A route key is an optional method plus a path, and a <code>null</code> route entry switches a default route off. Every engine option is a key of <code>guard</code> (the named arguments of the engine's <code>SecurityConfig</code>), and every route option a key of a route (<code>RouteConfig</code>). An unknown key or an invalid route option throws instead of being ignored. Options that need a closure or an object (<code>onBlock</code>, <code>authVerifier</code>, <code>customRequestCheck</code> and similar) cannot be expressed in a config file and are rejected.</p>
+<p>Settings you give override the defaults key by key. A route key is an optional method plus a path, and a <code>null</code> route entry switches a default route off. <code>enabled</code> switches the guard on (the default is off). Every other engine option is a key of <code>guardCore</code> (the named arguments of the engine's <code>SecurityConfig</code>), and every route option a key of a route (<code>RouteConfig</code>). An unknown key or an invalid route option throws instead of being ignored. Options that need a closure or an object (<code>onBlock</code>, <code>authVerifier</code>, <code>customRequestCheck</code> and similar) cannot be expressed in a config file and are rejected.</p>
+<h2 id="upgrading-from-100">Upgrading from 1.0.0</h2>
+<p>Version 1.0.0 used two root keys, <code>guardEnabled</code> and <code>guard</code>. Upgrading the extension moves them automatically when they are in <code>data/config.php</code> or <code>data/config-internal.php</code>, which is where the 1.0.0 docs said to put them: the upgrade runs a script that writes <code>guardCore</code> into <code>data/config-internal.php</code> with <code>enabled</code> set from <code>guardEnabled</code> and every setting of <code>guard</code>, then removes the old keys from both files.</p>
+<ul>
+<li>Old keys in <code>data/config-override.php</code> or <code>data/config-internal-override.php</code> are left alone, because EspoCRM never writes those files. The upgrade changes nothing while either one holds <code>guardEnabled</code> or <code>guard</code>, and the old keys keep working with the deprecation warning until you move them under <code>guardCore</code> yourself.</li>
+<li>Old keys that you add by hand later still work. The guard logs one deprecation warning when it starts, naming this page.</li>
+<li>Setting <code>guardCore</code> and one of the old keys at the same time while the guard is on is an error: the middleware throws and says to move everything under <code>guardCore</code> and remove the old keys. When both say the guard is off, nothing happens.</li>
+<li>If <code>guard</code> is not a map, the upgrade leaves the config as it is, and the middleware reports it loudly when the guard is on.</li>
+</ul>
 <h2 id="redis">Redis</h2>
 <p>Redis is off by default. Without it, rate limits, behavior rules and bans keep their state per request, so under PHP-FPM they never trigger across requests. Set <code>enableRedis</code> and <code>redisUrl</code>. Only <code>redis://host[:port]</code> is supported: a URL with credentials, a database index or <code>rediss</code> is rejected, because the engine's Redis client connects by host and port only.</p>
 <h2 id="trusted-proxies-and-ipaddressserverparam">Trusted proxies and <code>ipAddressServerParam</code></h2>
-<p>The guard identifies the client by <code>REMOTE_ADDR</code>. EspoCRM's <code>ipAddressServerParam</code> is not read. If you set it to something else (for example <code>HTTP_X_FORWARDED_FOR</code>), the guard logs a warning, and behind a proxy you must set <code>guard.trustedProxies</code> (and <code>guard.trustedProxyDepth</code>) so the client is resolved from the forwarded header. Without that every client behind the proxy looks like the proxy.</p>
+<p>The guard identifies the client by <code>REMOTE_ADDR</code>. EspoCRM's <code>ipAddressServerParam</code> is not read. If you set it to something else (for example <code>HTTP_X_FORWARDED_FOR</code>), the guard logs a warning, and behind a proxy you must set <code>guardCore.trustedProxies</code> (and <code>guardCore.trustedProxyDepth</code>) so the client is resolved from the forwarded header. Without that every client behind the proxy looks like the proxy.</p>
 <h2 id="country-filtering">Country filtering</h2>
 <p>The optional <code>ipinfo</code> map (<code>token</code>, and optionally <code>dbPath</code> and <code>maxAge</code>) turns on the IPInfo country database for the engine's country rules.</p>
 <h2 id="secrets">Secrets</h2>
-<p><code>guard</code> can hold a Redis URL and an agent API key. The extension declares both config keys at level <code>system</code>, so EspoCRM never returns them from <code>GET /api/v1/Settings</code>, for any user.</p>
+<p><code>guardCore</code> can hold a Redis URL and an agent API key. The extension declares it (and the deprecated <code>guardEnabled</code> and <code>guard</code>) at level <code>system</code>, so EspoCRM never returns them from <code>GET /api/v1/Settings</code>, for any user.</p>
 
 
 

@@ -594,7 +594,7 @@
 
 
 <h1 id="usage-and-default-policy">Usage and default policy</h1>
-<p>With only <code>guardEnabled</code> set to true you get the default policy:</p>
+<p>With only <code>'enabled' =&gt; true</code> under <code>guardCore</code> you get the default policy:</p>
 <ul>
 <li>Passive mode: what would be blocked is logged, nothing is blocked.</li>
 <li>Attack screening of paths, query strings, headers and JSON or form bodies is on.</li>
@@ -604,7 +604,7 @@
 </ul>
 <h2 id="rolling-out">Rolling out</h2>
 <ol>
-<li>Set <code>'guardEnabled' =&gt; true</code> and clear the cache.</li>
+<li>Set <code>'guardCore' =&gt; ['enabled' =&gt; true]</code> and clear the cache.</li>
 <li>Watch <code>data/logs</code> for <code>Guard would block by ...</code> lines. Each line names the check, the reason and the client, and the request still passes.</li>
 <li>Fix or exclude what is a false positive, for example with a route policy.</li>
 <li>Set <code>'passiveMode' =&gt; false</code>. Blocked requests now log <code>Guard blocked by ...</code> and get the engine's response (400 for a detected attack, 403 for a banned client, 429 for a rate limit).</li>
@@ -612,7 +612,8 @@
 <p>Redis matters for steps 3 and 4: without it the rate limits and bans do not hold across requests.</p>
 <h2 id="route-policies">Route policies</h2>
 <p><a href="../routes/">Route policies</a> explains how a request finds its route, what switching a default route off does, and every option and behavior rule key with its unit.</p>
-<div class="highlight"><pre><span></span><code><span class="x">'guard' =&gt; [</span>
+<div class="highlight"><pre><span></span><code><span class="x">'guardCore' =&gt; [</span>
+<span class="x">    'enabled' =&gt; true,</span>
 <span class="x">    'routes' =&gt; [</span>
 <span class="x">        // A stricter lead capture limit.</span>
 <span class="x">        'POST /api/v1/LeadCapture/' =&gt; ['rateLimit' =&gt; 3, 'rateLimitWindow' =&gt; 60],</span>

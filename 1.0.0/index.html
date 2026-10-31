@@ -573,7 +573,7 @@
 <p>Guard Core for EspoCRM is an EspoCRM extension that adds application-layer security to the EspoCRM API. It is built on <a href="https://packagist.org/packages/rennf93/psr15-guard">psr15-guard</a> and the <a href="https://packagist.org/packages/rennf93/guard-core-php">guard-core-php</a> engine (both MIT).</p>
 <p>It screens API requests for attacks, bans clients that misbehave, applies per-route policies and has a passive mode that logs what it would block without blocking anything. It is off until you enable it, and while off it adds one config lookup per request.</p>
 <p>The extension registers one global API middleware (<code>globalMiddlewareClassNameList</code>), so it covers <code>public/api/v1/</code> and the portal API. The guard runs inside the application, so it sees what a perimeter device cannot: the parsed JSON body, the route and the response status. It complements a reverse proxy or WAF, it does not replace one.</p>
-<p>This extension holds no security logic. Detection, rate limiting, bans, headers and responses live in the engine. The extension reads the <code>guard</code> config, wires the engine to EspoCRM's logger and config, and registers the middleware.</p>
+<p>This extension holds no security logic. Detection, rate limiting, bans, headers and responses live in the engine. The extension reads the <code>guardCore</code> config, wires the engine to EspoCRM's logger and config, and registers the middleware.</p>
 <h2 id="requirements">Requirements</h2>
 <ul>
 <li>EspoCRM 9.0.0 or later.</li>
@@ -583,8 +583,8 @@
 <h2 id="where-to-go-next">Where to go next</h2>
 <ul>
 <li><a href="installation/">Installation</a>: the zip, the upload and what uninstalling does.</li>
-<li><a href="configuration/">Configuration</a>: the <code>guard</code> keys, Redis, trusted proxies.</li>
-<li><a href="usage/">Usage and default policy</a>: what you get with only <code>guardEnabled</code> set, and how to roll out from passive mode.</li>
+<li><a href="configuration/">Configuration</a>: the <code>guardCore</code> keys, Redis, trusted proxies.</li>
+<li><a href="usage/">Usage and default policy</a>: what you get with only <code>guardCore.enabled</code> set, and how to roll out from passive mode.</li>
 <li><a href="routes/">Route policies</a>: how routes match, every route option, behavior rules (types, patterns, units, actions).</li>
 <li><a href="telemetry-agent/">Telemetry agent</a>: the optional agent.</li>
 <li><a href="coverage/">What it covers and does not</a>: the entry points and the known limits.</li>
