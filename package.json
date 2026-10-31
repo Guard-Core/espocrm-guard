@@ -1,6 +1,6 @@
 {
   "name": "espocrm-ext-guard-core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Guard Core application-layer security for the EspoCRM API.",
   "scripts": {
     "sa": "vendor/bin/phpstan",

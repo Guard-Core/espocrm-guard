@@ -6,7 +6,7 @@ It screens API requests for attacks, bans clients that misbehave, applies per-ro
 
 The extension registers one global API middleware (`globalMiddlewareClassNameList`), so it covers `public/api/v1/` and the portal API. The guard runs inside the application, so it sees what a perimeter device cannot: the parsed JSON body, the route and the response status. It complements a reverse proxy or WAF, it does not replace one.
 
-This extension holds no security logic. Detection, rate limiting, bans, headers and responses live in the engine. The extension reads the `guard` config, wires the engine to EspoCRM's logger and config, and registers the middleware.
+This extension holds no security logic. Detection, rate limiting, bans, headers and responses live in the engine. The extension reads the `guardCore` config, wires the engine to EspoCRM's logger and config, and registers the middleware.
 
 ## Requirements
 
@@ -17,8 +17,8 @@ This extension holds no security logic. Detection, rate limiting, bans, headers 
 ## Where to go next
 
 - [Installation](installation.md): the zip, the upload and what uninstalling does.
-- [Configuration](configuration.md): the `guard` keys, Redis, trusted proxies.
-- [Usage and default policy](usage.md): what you get with only `guardEnabled` set, and how to roll out from passive mode.
+- [Configuration](configuration.md): the `guardCore` keys, Redis, trusted proxies.
+- [Usage and default policy](usage.md): what you get with only `guardCore.enabled` set, and how to roll out from passive mode.
 - [Route policies](routes.md): how routes match, every route option, behavior rules (types, patterns, units, actions).
 - [Telemetry agent](telemetry-agent.md): the optional agent.
 - [What it covers and does not](coverage.md): the entry points and the known limits.

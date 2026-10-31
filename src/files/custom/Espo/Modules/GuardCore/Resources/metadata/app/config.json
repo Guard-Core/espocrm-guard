@@ -1,5 +1,8 @@
 {
     "params": {
+        "guardCore": {
+            "level": "system"
+        },
         "guardEnabled": {
             "level": "system"
         },

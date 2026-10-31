@@ -1,6 +1,6 @@
 # simple_app
 
-A real EspoCRM (the official `espocrm/espocrm` image) with MariaDB, and the Guard Core extension installed from the zip this repository builds. `guardEnabled` is true and nothing else is set, so the guard runs the default policy in passive mode: attacks are logged, nothing is blocked.
+A real EspoCRM (the official `espocrm/espocrm` image) with MariaDB, and the Guard Core extension installed from the zip this repository builds. `guardCore` holds only `'enabled' => true`, so the guard runs the default policy in passive mode: attacks are logged, nothing is blocked.
 
 The official image is used because it installs EspoCRM on first start from environment variables, and its `custom/`, `data/` and `client/custom/` volumes are what an extension install needs. The extension is installed through EspoCRM's own `command.php extension` once the installer has finished (`guard-entrypoint.sh`, `guard-setup.sh`), and the keys in `guard-config.php` are written to `data/config.php`.
 

@@ -43,7 +43,7 @@ class MiddlewareTest extends TestCase
         $builder = $this->createMock(GuardMiddlewareBuilder::class);
         $builder->expects(self::never())->method('build');
 
-        $middleware = new Middleware($this->createConfig(['guardEnabled' => false]), new DefaultPolicy(), $builder);
+        $middleware = new Middleware($this->createConfig(['guardEnabled' => false]), new DefaultPolicy(), $builder, $this->createLog());
 
         $request = $this->createRequest('GET', "/api/v1/App/user?q=1' OR '1'='1' UNION SELECT 1--");
 
@@ -58,7 +58,7 @@ class MiddlewareTest extends TestCase
         $builder = $this->createMock(GuardMiddlewareBuilder::class);
         $builder->expects(self::never())->method('build');
 
-        $middleware = new Middleware($this->createConfig([]), new DefaultPolicy(), $builder);
+        $middleware = new Middleware($this->createConfig([]), new DefaultPolicy(), $builder, $this->createLog());
 
         $response = $middleware->process($this->createRequest('GET', '/'), $this->createHandler());
 
@@ -435,6 +435,142 @@ class MiddlewareTest extends TestCase
             ->process($this->createRequest('GET', '/'), $this->createHandler());
     }
 
+    public function testGuardCoreEnabledBuildsTheGuardWithoutPassingEnabledToTheEngine(): void
+    {
+        $middleware = $this->createMiddleware(['passiveMode' => false]);
+
+        $response = $middleware->process(
+            $this->createRequest('GET', "/api/v1/Account?where=1' OR '1'='1' UNION SELECT password FROM user--"),
+            $this->createHandler()
+        );
+
+        $this->assertSame(400, $response->getStatusCode());
+        $this->assertSame(0, $this->countDeprecationWarnings());
+    }
+
+    public function testGuardCoreDisabledPassesThroughAndBuildsNothing(): void
+    {
+        $this->assertDisabledBuildsNothing(['guardCore' => ['enabled' => false, 'passiveMode' => false]]);
+    }
+
+    public function testGuardCoreWithoutEnabledIsDisabled(): void
+    {
+        $this->assertDisabledBuildsNothing(['guardCore' => ['passiveMode' => false]]);
+    }
+
+    public function testEmptyGuardCoreMapIsDisabled(): void
+    {
+        $this->assertDisabledBuildsNothing(['guardCore' => []]);
+    }
+
+    public function testGuardCoreEnabledThatIsNotABoolFailsLoudly(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Config parameter 'guardCore.enabled' must be true or false.");
+
+        $this->createMiddlewareFromConfig(['guardCore' => ['enabled' => 'yes']])
+            ->process($this->createRequest('GET', '/'), $this->createHandler());
+    }
+
+    public function testGuardCoreThatIsNotAMapFailsLoudly(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Config parameter 'guardCore' must be a map of settings.");
+
+        $this->createMiddlewareFromConfig(['guardCore' => 'nope'])
+            ->process($this->createRequest('GET', '/'), $this->createHandler());
+    }
+
+    /**
+     * @return array<string, array{array<string, mixed>}>
+     */
+    public static function splitSettingsProvider(): array
+    {
+        $enabled = ['enabled' => true];
+
+        return [
+            'guardCore enabled and old guard set' => [['guardCore' => $enabled, 'guard' => ['passiveMode' => false]]],
+            'guardCore enabled and old guardEnabled set' => [['guardCore' => $enabled, 'guardEnabled' => true]],
+            'guardCore enabled and old guardEnabled false' => [['guardCore' => $enabled, 'guardEnabled' => false]],
+            'guardCore disabled and old guardEnabled true' => [['guardCore' => ['enabled' => false], 'guardEnabled' => true]],
+            'guardCore without enabled and old guardEnabled true' => [['guardCore' => [], 'guardEnabled' => true]],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     */
+    #[DataProvider('splitSettingsProvider')]
+    public function testSettingsSplitBetweenGuardCoreAndTheOldKeysFailLoudly(array $values): void
+    {
+        $builder = $this->createMock(GuardMiddlewareBuilder::class);
+        $builder->expects(self::never())->method('build');
+
+        $middleware = new Middleware($this->createConfig($values), new DefaultPolicy(), $builder, $this->createLog());
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("split between 'guardCore' and the old 'guardEnabled'/'guard'");
+
+        $middleware->process($this->createRequest('GET', '/'), $this->createHandler());
+    }
+
+    public function testGuardCoreDisabledWithOldKeysDisabledPassesThrough(): void
+    {
+        $this->assertDisabledBuildsNothing([
+            'guardCore' => ['enabled' => false],
+            'guardEnabled' => false,
+            'guard' => ['passiveMode' => false],
+        ]);
+    }
+
+    public function testLegacyKeysStillWorkAndLogTheDeprecationOncePerBuild(): void
+    {
+        $middleware = $this->createMiddlewareFromConfig([
+            'guardEnabled' => true,
+            'guard' => ['passiveMode' => false],
+        ]);
+
+        $request = $this->createRequest('GET', "/api/v1/Account?where=1' OR '1'='1' UNION SELECT password FROM user--");
+
+        $this->assertSame(400, $middleware->process($request, $this->createHandler())->getStatusCode());
+        $this->assertSame(400, $middleware->process($request, $this->createHandler())->getStatusCode());
+
+        $this->assertSame(1, $this->countDeprecationWarnings());
+        $this->assertTrue($this->logHandler->hasWarningThatContains('docs/configuration.md'));
+        $this->assertTrue($this->logHandler->hasWarningThatContains("'guardCore'"));
+    }
+
+    public function testLegacyGuardEnabledAloneUsesTheDefaultPolicy(): void
+    {
+        $middleware = $this->createMiddlewareFromConfig(['guardEnabled' => true]);
+
+        $this->assertSame(200, $middleware->process($this->createRequest('GET', '/'), $this->createHandler())->getStatusCode());
+        $this->assertSame(1, $this->countDeprecationWarnings());
+    }
+
+    public function testDisabledLegacyLogsNothing(): void
+    {
+        $this->assertDisabledBuildsNothing(['guardEnabled' => false, 'guard' => ['passiveMode' => false]]);
+        $this->assertSame([], $this->logHandler->getRecords());
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     */
+    private function assertDisabledBuildsNothing(array $values): void
+    {
+        $builder = $this->createMock(GuardMiddlewareBuilder::class);
+        $builder->expects(self::never())->method('build');
+
+        $middleware = new Middleware($this->createConfig($values), new DefaultPolicy(), $builder, $this->createLog());
+
+        $request = $this->createRequest('GET', "/api/v1/App/user?q=1' OR '1'='1' UNION SELECT 1--");
+
+        $this->assertSame(200, $middleware->process($request, $this->createHandler())->getStatusCode());
+        $this->assertSame(1, $this->handlerCalls);
+        $this->assertSame([], $this->logHandler->getRecords());
+    }
+
     public function testGuardConfigThatIsNotAMapFailsLoudly(): void
     {
         $builder = $this->createMock(GuardMiddlewareBuilder::class);
@@ -443,7 +579,8 @@ class MiddlewareTest extends TestCase
         $middleware = new Middleware(
             $this->createConfig(['guardEnabled' => true, 'guard' => 'nope']),
             new DefaultPolicy(),
-            $builder
+            $builder,
+            $this->createLog()
         );
 
         $this->expectException(InvalidArgumentException::class);
@@ -525,14 +662,14 @@ class MiddlewareTest extends TestCase
         $this->createMiddleware([], ['ipAddressServerParam' => 'HTTP_X_FORWARDED_FOR'])
             ->process($this->createRequest('GET', '/'), $this->createHandler());
 
-        $this->assertTrue($this->logHandler->hasWarningThatContains('guard.trustedProxies'));
+        $this->assertTrue($this->logHandler->hasWarningThatContains('guardCore.trustedProxies'));
     }
 
     public function testNoWarningWithDefaultClientAddressParam(): void
     {
         $this->createMiddleware([])->process($this->createRequest('GET', '/'), $this->createHandler());
 
-        $this->assertFalse($this->logHandler->hasWarningThatContains('guard.trustedProxies'));
+        $this->assertFalse($this->logHandler->hasWarningThatContains('guardCore.trustedProxies'));
     }
 
     private function getRedisHost(): string
@@ -557,17 +694,41 @@ class MiddlewareTest extends TestCase
      */
     private function createMiddleware(array $guard, array $extraConfig = []): Middleware
     {
-        $config = $this->createConfig(['guardEnabled' => true, 'guard' => $guard, ...$extraConfig]);
+        return $this->createMiddlewareFromConfig(
+            ['guardCore' => ['enabled' => true, ...$guard], ...$extraConfig]
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     */
+    private function createMiddlewareFromConfig(array $values): Middleware
+    {
+        $config = $this->createConfig($values);
+        $log = $this->createLog();
 
         $builder = new GuardMiddlewareBuilder(
             $config,
-            new Log('test', [$this->logHandler]),
+            $log,
             new SecurityConfigBuilder(),
             new RouteConfigBuilder(),
             new GuardAgentFactory(),
         );
 
-        return new Middleware($config, new DefaultPolicy(), $builder);
+        return new Middleware($config, new DefaultPolicy(), $builder, $log);
+    }
+
+    private function createLog(): Log
+    {
+        return new Log('test', [$this->logHandler]);
+    }
+
+    private function countDeprecationWarnings(): int
+    {
+        return count(array_filter(
+            $this->logHandler->getRecords(),
+            fn ($record) => str_contains((string) $record['message'], 'are deprecated')
+        ));
     }
 
     /**

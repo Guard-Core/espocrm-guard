@@ -3,7 +3,7 @@
 namespace Espo\Modules\GuardCore\Api;
 
 /**
- * The policy applied when `guardEnabled` is true: passive mode, screening on, and route policies for the
+ * The policy applied when the guard is enabled: passive mode, screening on, and route policies for the
  * endpoints that are internet facing or credential related. Operator config overrides it key by key.
  *
  * Redis is off by default, and without it route rate limits, behavior rules and auto-bans keep state per request only,

@@ -3,6 +3,36 @@ Release Notes
 
 ___
 
+v1.1.0 (2026-10-31)
+-------------------
+
+One extension-owned config key, `guardCore`, with an automatic migration (v1.1.0)
+---------------------------------------------------------------------------------
+
+### Added
+
+- **One root config key, `guardCore`.** It is a map that holds `enabled` plus every setting that lived in `guard`, Redis settings included, so nothing collides with the config keys of other extensions. It is declared at level `system`, so the Settings API never returns it, and EspoCRM stores it in `data/config-internal.php`.
+- **An automatic migration on upgrade.** A new `AfterInstall` script moves `guardEnabled` and `guard` into `guardCore` (`enabled` first, then the settings) and removes the old keys. It changes nothing on a fresh install, when `guardCore` is already set, or when `guard` is not a map (the middleware reports that one loudly). Running it twice changes nothing.
+- **A docs page on route policies** (#15): how a request finds its route, what switching a default route off does, and every route option and behavior rule key with its unit.
+
+### Changed
+
+- **`guardEnabled` and `guard` are deprecated.** They keep working, and the guard logs one warning when it is built, pointing to docs/configuration.md. Setting `guardCore` and an old key at the same time while the guard is on throws an error that asks to move everything under `guardCore`. When both say the guard is off, nothing happens.
+- **The uninstall also removes `guardCore`.** An upgrade does not run the old version's uninstall script, so the migration is what moves the old keys.
+- **The docs, the examples and the live smoke checks use `guardCore`.** The configuration docs say to put it in `data/config-internal.php`, because EspoCRM stores level `system` parameters there and rewrites them there on any config save.
+
+### Fixed
+
+- **Uninstall and the migration now clear the old keys from both config files.** On EspoCRM 9.0 to 9.2, removing a level `system` parameter only touched `data/config-internal.php`, so uninstalling left `guardEnabled` and `guard` in `data/config.php`, where they lose their `system` level and the Settings API can return them. The migration had the same gap and would have left them next to `guardCore`. Both scripts now remove them from both files.
+- **The migration leaves old keys in an override file alone.** EspoCRM never writes `data/config-override.php` or `data/config-internal-override.php`, so when either holds `guardEnabled` or `guard` nothing is migrated and the old keys keep working with the deprecation warning.
+
+### Test
+
+- New unit tests run both scripts against EspoCRM's real `Config` and `ConfigWriter` and assert the file contents (keys in `config.php`, in `config-internal.php`, split across both, in an override file, a fresh install, a second run and an uninstall).
+- New unit tests cover the `guardCore` resolution (enabled, disabled, missing `enabled`, not a bool, not a map, split settings), the deprecation warning once per build, every case of the migration including a second run, and the three-key uninstall. Line coverage of the module stays at 100%.
+
+___
+
 v1.0.0 (2026-10-20)
 -------------------
 

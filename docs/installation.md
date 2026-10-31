@@ -6,11 +6,15 @@
 
 From the command line the same install is `php command.php extension --file=guard-core-<version>.zip`, run in the EspoCRM root directory.
 
-Installing changes nothing: `guardEnabled` is absent, so the middleware passes every request straight through. See [Usage and default policy](usage.md) to turn it on.
+Installing changes nothing: `guardCore` is absent, so the middleware passes every request straight through. See [Usage and default policy](usage.md) to turn it on.
 
 ## Uninstall
 
-Uninstalling removes the middleware and also deletes `guardEnabled` and `guard` from the config files. That is on purpose: the extension hides `guard` (it can hold a Redis URL and an agent API key) from the Settings API, and once it is gone nothing would hide those values from logged-in users. Keep a copy of your `guard` block if you plan to reinstall.
+Uninstalling removes the middleware and also deletes `guardCore` (and the old `guardEnabled` and `guard`) from the config files. That is on purpose: the extension hides `guardCore` (it can hold a Redis URL and an agent API key) from the Settings API, and once it is gone nothing would hide those values from logged-in users. Keep a copy of your `guardCore` block if you plan to reinstall.
+
+## Upgrade
+
+Upgrading from 1.0.0 moves `guardEnabled` and `guard` under `guardCore` automatically. See [Configuration](configuration.md#upgrading-from-100).
 
 ## Build from source
 

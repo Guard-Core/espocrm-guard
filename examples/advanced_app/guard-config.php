@@ -5,8 +5,8 @@
 // Not the whole network: the Docker gateway that host clients come from is in it, and the engine never bans a trusted
 // proxy address. Passive mode is off: attacks are blocked.
 return [
-    'guardEnabled' => true,
-    'guard' => [
+    'guardCore' => [
+        'enabled' => true,
         'passiveMode' => false,
         'enableRedis' => true,
         'redisUrl' => 'redis://redis:6379',
