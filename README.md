@@ -195,7 +195,7 @@ With only `guardEnabled` set to true you get the default policy:
 - Passive mode: what would be blocked is logged, nothing is blocked.
 - Attack screening of paths, query strings, headers and JSON or form bodies is on.
 - No body scan on `POST /api/v1/Attachment/chunk/`.
-- A ban rule after more than 10 responses with status 401 in 5 minutes on `GET /api/v1/App/user` and on the API prefix.
+- A ban rule after more than 10 responses with status 401 in 5 minutes on `GET /api/v1/App/user` and on every other API path (counted per path).
 - Rate limits on `POST /api/v1/LeadCapture/` (10 per minute) and on the two password routes (5 per 5 minutes).
 
 Start in passive mode, watch `data/logs` for `Guard would block by ...` lines, then set `'passiveMode' => false`. Settings you give override the defaults key by key. A route key is an optional method plus a path, and a `null` route entry switches a default route off. Every engine option is a key of `guard` (the named arguments of the engine's `SecurityConfig`), and every route option a key of a route (`RouteConfig`). An unknown key or an invalid route option throws instead of being ignored. Options that need a closure or an object (`onBlock`, `authVerifier`, `customRequestCheck` and similar) cannot be expressed in a config file and are rejected.

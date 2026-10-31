@@ -19,5 +19,6 @@ This extension holds no security logic. Detection, rate limiting, bans, headers 
 - [Installation](installation.md): the zip, the upload and what uninstalling does.
 - [Configuration](configuration.md): the `guard` keys, Redis, trusted proxies.
 - [Usage and default policy](usage.md): what you get with only `guardEnabled` set, and how to roll out from passive mode.
+- [Route policies](routes.md): how routes match, every route option, behavior rules (types, patterns, units, actions).
 - [Telemetry agent](telemetry-agent.md): the optional agent.
 - [What it covers and does not](coverage.md): the entry points and the known limits.
